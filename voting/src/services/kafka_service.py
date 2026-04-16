@@ -20,7 +20,7 @@ class KafkaService:
         if self.producer:
             await self.producer.stop()
 
-    async def send_vote_event(self, target_id: str, new_count: int, user_id: str, direction: int):
+    async def send_vote_event(self, target_type: str, target_id: str, new_count: int, user_id: str, direction: int):
         if not self.producer:
             logger.error("Kafka producer not initialized")
             return
@@ -28,13 +28,30 @@ class KafkaService:
         payload = {
             "event_type": "VOTE_CAST",
             "data": {
-                "idea_id": target_id,
+                "target_type": target_type,
+                "target_id": target_id,
                 "new_count": new_count,
                 "user_id": user_id,
                 "direction": direction
             }
         }
-        logger.info(f"Sending VOTE_CAST event for idea {target_id}: count={new_count}")
+        logger.info(f"Sending VOTE_CAST event for {target_type} {target_id}: count={new_count}")
         await self.producer.send_and_wait(settings.KAFKA_VOTES_TOPIC, value=payload)
+
+    async def send_xp_event(self, user_id: int, amount: int, reason: str):
+        if not self.producer:
+            logger.error("Kafka producer not initialized")
+            return
+        
+        payload = {
+            "type": "XP_EARNED",
+            "data": {
+                "user_id": user_id,
+                "amount": amount,
+                "reason": reason
+            }
+        }
+        logger.info(f"Sending XP_EARNED event for user {user_id}: amount={amount}")
+        await self.producer.send_and_wait(settings.KAFKA_XP_TOPIC, value=payload)
 
 kafka_service = KafkaService()

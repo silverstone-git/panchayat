@@ -9,6 +9,10 @@ spring:
           uri: ${USER_SERVICE_URI:http://localhost:8001}
           predicates:
             - Path=/api/v1/auth/**
+        - id: user-service-users
+          uri: ${USER_SERVICE_URI:http://localhost:8001}
+          predicates:
+            - Path=/api/v1/users/**
         - id: threads-service
           uri: ${THREADS_SERVICE_URI:http://localhost:8002}
           predicates:

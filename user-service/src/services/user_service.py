@@ -38,4 +38,25 @@ class UserService:
         await db.refresh(db_user)
         return db_user
 
+    async def add_xp(self, db: AsyncSession, user_id: int, xp_amount: int):
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalars().first()
+        if not user:
+            return None
+        
+        user.xp += xp_amount
+        
+        # Simple leveling logic: level = floor(sqrt(xp / 100)) + 1
+        # Example: 0 XP = Lvl 1, 100 XP = Lvl 2, 400 XP = Lvl 3, 900 XP = Lvl 4
+        import math
+        new_level = math.floor(math.sqrt(user.xp / 100)) + 1
+        if new_level > user.level:
+            user.level = new_level
+            # Could emit a LEVEL_UP event here in the future
+            
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+        return user
+
 user_service = UserService()

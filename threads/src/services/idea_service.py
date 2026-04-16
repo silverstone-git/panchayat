@@ -55,7 +55,19 @@ class IdeaService:
             }
         )
 
+        # Emit XP event
+        await kafka_service.send_event(
+            settings.KAFKA_XP_TOPIC,
+            "XP_EARNED",
+            {
+                "user_id": int(author_id),
+                "amount": 50,
+                "reason": "IDEA_CREATED"
+            }
+        )
+
         # Invalidate Cache
+
         await cache_service.clear_feed_cache()
 
         return new_idea

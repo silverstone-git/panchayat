@@ -66,6 +66,12 @@ header {
 
 header button { width: auto; }
 
+.profile-info {
+  margin: 0;
+  font-size: 0.9em;
+  color: #00ff88;
+}
+
 .idea-card {
   background: #161f30;
   border: 1px solid #1e2d45;
@@ -78,3 +84,120 @@ header button { width: auto; }
 .idea-card p { margin: 0 0 16px 0; color: #94a3b8; }
 .idea-card .meta { display: flex; gap: 10px; align-items: center; }
 .idea-card .meta button { width: auto; padding: 4px 8px; margin: 0; }
+
+.comments-section {
+  margin-top: 20px;
+  border-top: 1px solid #1e2d45;
+  padding-top: 15px;
+}
+
+.comments-section h4 {
+  margin-top: 0;
+  color: #00d4ff;
+}
+
+.comments-section form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.comments-section form input {
+  margin-bottom: 0;
+}
+
+.comment {
+  border-left: 2px solid #1e2d45;
+  padding-left: 10px;
+  margin-bottom: 15px;
+  background: #111827;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.comment-header {
+  font-size: 0.8em;
+  color: #94a3b8;
+  margin-bottom: 5px;
+}
+
+.comment p {
+  margin: 0 0 10px 0;
+  color: #e2e8f0;
+}
+
+.reply-btn {
+  background: transparent;
+  color: #00d4ff;
+  font-size: 0.8em;
+  padding: 0;
+  border: none;
+  text-decoration: underline;
+  margin-bottom: 10px;
+}
+
+.reply-btn:hover {
+  background: transparent;
+  color: #00b0d4;
+}
+
+.reply-form {
+  margin-top: 10px;
+}
+
+.comments-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.comments-header-row h4 { margin: 0; }
+
+.sort-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.sort-buttons button {
+  width: auto;
+  padding: 2px 8px;
+  font-size: 0.7em;
+  background: #1e2d45;
+  color: #94a3b8;
+}
+
+.sort-buttons button.active {
+  background: #00d4ff;
+  color: black;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.comment-actions .votes {
+  font-size: 0.8em;
+  color: #94a3b8;
+}
+
+.comment-actions button {
+  width: auto;
+  padding: 0 4px;
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  font-size: 1em;
+}
+
+.comment-actions button.voted {
+  color: #00ff88;
+  font-weight: bold;
+}
+
+.comment-actions .reply-btn {
+  margin-bottom: 0;
+  margin-left: 5px;
+}

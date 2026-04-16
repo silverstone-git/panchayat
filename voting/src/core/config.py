@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
     KAFKA_VOTES_TOPIC: str = "votes-events"
+    KAFKA_XP_TOPIC: str = "xp-events"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

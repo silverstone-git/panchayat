@@ -21,7 +21,6 @@ services:
       - THREADS_SERVICE_URI=http://threads:8000
       - VOTING_SERVICE_URI=http://voting:8000
       - USER_SERVICE_URI=http://user-service:8000
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     depends_on:
       postgres-db:
         condition: service_healthy
@@ -109,7 +108,6 @@ services:
       - POSTGRES_DB=users_db
       - REDIS_HOST=redis-cache
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     depends_on:
       postgres-db:
         condition: service_healthy

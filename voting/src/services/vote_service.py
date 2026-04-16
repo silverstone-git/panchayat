@@ -57,9 +57,12 @@ class VoteService:
             user_id, direction, payload
         )
         
-        # We only send to Kafka if it's an idea vote, as Threads service is listening for ideas
-        if target_type == "idea":
-            await kafka_service.send_vote_event(target_id, int(new_total), user_id, direction)
+        # Notify threads service of the vote change
+        await kafka_service.send_vote_event(target_type, target_id, int(new_total), user_id, direction)
+        
+        # Award XP for voting
+        if direction != 0:
+            await kafka_service.send_xp_event(int(user_id), 10, "VOTE_CAST")
             
         return int(new_total)
 

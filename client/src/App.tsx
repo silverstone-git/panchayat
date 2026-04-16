@@ -1,6 +1,157 @@
 import { useState, useEffect, FormEvent } from 'react';
 import './App.css';
 
+function Comments({ ideaId, token }: { ideaId: string; token: string }) {
+  const [comments, setComments] = useState<any[]>([]);
+  const [userCommentVotes, setUserCommentVotes] = useState<Record<string, number>>({});
+  const [sort, setSort] = useState<'top' | 'new'>('new');
+  const [newComment, setNewComment] = useState('');
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const fetchComments = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/v1/threads/ideas/${ideaId}/comments?sort=${sort}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setComments(data);
+        
+        // Fetch user's votes for these comments
+        const ids = data.map((c: any) => c.id).join(',');
+        if (ids) {
+          const vRes = await fetch(`/api/v1/votes/my-votes?target_type=comment&target_ids=${ids}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (vRes.ok) {
+            const vData = await vRes.json();
+            setUserCommentVotes(vData);
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComments();
+  }, [ideaId, sort]);
+
+  const postComment = async (e: FormEvent, parentId: string | null = null, content: string) => {
+    e.preventDefault();
+    if (!content.trim()) return;
+
+    try {
+      const res = await fetch(`/api/v1/threads/ideas/${ideaId}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ content, parent_id: parentId })
+      });
+      if (res.ok) {
+        setNewComment('');
+        setReplyContent('');
+        setReplyingTo(null);
+        fetchComments();
+      } else {
+        alert("Failed to post comment.");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const voteComment = async (id: string, targetDir: number) => {
+    const current = userCommentVotes[id] || 0;
+    const newDir = current === targetDir ? 0 : targetDir;
+    const delta = newDir - current;
+    
+    // Optimistic update
+    setComments(prev => prev.map(c => c.id === id ? { ...c, vote_count: c.vote_count + delta } : c));
+    setUserCommentVotes(prev => ({ ...prev, [id]: newDir }));
+
+    try {
+      await fetch(`/api/v1/votes/comment/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ direction: newDir })
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="comments-section">
+      <div className="comments-header-row">
+        <h4>Comments</h4>
+        <div className="sort-buttons">
+          <button className={sort === 'new' ? 'active' : ''} onClick={() => setSort('new')}>New</button>
+          <button className={sort === 'top' ? 'active' : ''} onClick={() => setSort('top')}>Top</button>
+        </div>
+      </div>
+      <form onSubmit={(e) => postComment(e, null, newComment)}>
+        <input 
+          placeholder="Add a comment..." 
+          value={newComment} 
+          onChange={(e) => setNewComment(e.target.value)} 
+          required 
+        />
+        <button type="submit">Post</button>
+      </form>
+
+      {loading ? <p>Loading comments...</p> : (
+        <div className="comments-list">
+          {comments.map((comment) => (
+            <div 
+              key={comment.id} 
+              className="comment" 
+              style={{ marginLeft: `${comment.depth * 20}px` }}
+            >
+              <div className="comment-header">
+                <strong>{comment.author_id}</strong>
+              </div>
+              <p>{comment.content}</p>
+              
+              <div className="comment-actions">
+                <span className="votes">Score: {comment.vote_count}</span>
+                <button onClick={() => voteComment(comment.id, 1)} className={userCommentVotes[comment.id] === 1 ? 'voted' : ''}>▲</button>
+                <button onClick={() => voteComment(comment.id, -1)} className={userCommentVotes[comment.id] === -1 ? 'voted' : ''}>▼</button>
+                <button 
+                  className="reply-btn"
+                  onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                >
+                  Reply
+                </button>
+              </div>
+
+              {replyingTo === comment.id && (
+                <form className="reply-form" onSubmit={(e) => postComment(e, comment.id, replyContent)}>
+                  <input 
+                    placeholder="Write a reply..." 
+                    value={replyContent} 
+                    onChange={(e) => setReplyContent(e.target.value)} 
+                    required 
+                  />
+                  <button type="submit">Post Reply</button>
+                </form>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -8,6 +159,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   const [feed, setFeed] = useState<any[]>([]);
   const [userVotes, setUserVotes] = useState<Record<string, number>>({});
+  const [profile, setProfile] = useState<any>(null);
   
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -147,8 +299,22 @@ function App() {
     }
   };
 
+  const fetchProfile = async () => {
+    if (!token) return;
+    const res = await fetch('/api/v1/users/me', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setProfile(data);
+    }
+  };
+
   useEffect(() => {
-    if (isLoggedIn) fetchFeed();
+    if (isLoggedIn) {
+      fetchFeed();
+      fetchProfile();
+    }
   }, [isLoggedIn]);
 
   if (!isLoggedIn) {
@@ -170,7 +336,10 @@ function App() {
   return (
     <div className="app-container">
       <header>
-        <h1>DemoVox Feed</h1>
+        <div>
+          <h1>DemoVox Feed</h1>
+          {profile && <p className="profile-info">Welcome, {profile.username} | Lvl: {profile.level} | XP: {profile.xp}</p>}
+        </div>
         <button onClick={handleLogout}>Logout</button>
       </header>
       
@@ -197,6 +366,7 @@ function App() {
                 className={userVotes[item.id || item._id] === -1 ? 'active-downvote' : ''}
                 onClick={() => vote(item.id || item._id, -1)}>👎</button>
             </div>
+            {token && <Comments ideaId={item.id || item._id} token={token} />}
           </div>
         ))}
       </div>

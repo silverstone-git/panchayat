@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
     KAFKA_IDEAS_TOPIC: str = "ideas-events"
     KAFKA_VOTES_TOPIC: str = "votes-events"
+    KAFKA_XP_TOPIC: str = "xp-events"
     POPULAR_VOTE_THRESHOLD: int = 500
 
     # Elasticsearch
