@@ -1,9 +1,9 @@
+from typing import List, Optional
 from fastapi import APIRouter, Query
-from src.schemas.idea import IdeaResponse
+from src.schemas.idea import FeedResponse
 from src.services.search_service import search_service
 from src.services.cache_service import cache_service
-from src.schemas.idea import IdeaResponse, FeedResponse
-...
+
 router = APIRouter(prefix="/feed", tags=["Feed"])
 
 @router.get("", response_model=FeedResponse)

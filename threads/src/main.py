@@ -18,12 +18,10 @@ from src.services.kafka_service import kafka_service
 from src.services.search_service import search_service
 from src.services.cache_service import cache_service
 from src.services.idea_service import idea_service
-from src.services.idea_service import idea_service
 from src.services.comment_service import comment_service
 from src.db.session import async_session, engine
 from src.db.models import Base
 
-...
 async def handle_vote_event(payload):
     logger.info(f"Received Kafka event: {payload}")
     event_type = payload.get("event_type")
