@@ -55,11 +55,15 @@ docker-compose -f docker-compose.dev.yml up --build
 
 ---
 
-## 🔮 Future Development
-Panchayat is being built in phases. We have completed Phase 1 (Walking Skeleton) and Phase 2 (Consensus Engine).
+## 🔮 Project Status
+Panchayat is being built in phases.
+
+**Completed Phases:**
+- **Phase 1 (Walking Skeleton):** Basic end-to-end traversal.
+- **Phase 2 (Consensus Engine):** High-concurrency voting and Kafka integration.
+- **Phase 3 (Identity & Trust):** Dedicated User Service, JWT authentication, and Gamification.
+- **Phase 4 (Action & Moderation):** ML-driven moderation, Expert Review workflows, Notification engine, Gov-Submit simulation, and a modern UI overhaul with paginated search.
 
 **Upcoming Phases:**
-- **Phase 3 (Identity & Trust):** A dedicated User Service for advanced profiles, actual JWT implementation, and an AI-driven Moderation Service (FastAPI/ML) to handle toxicity reporting and automated queues.
-- **Phase 4 (Action & Gamification):** An Expert Review workflow for top-voted ideas, civic XP/badges gamification, and a Gov-Submit/Crowdfund service to bridge the gap between digital consensus and real-world action.
-
-*For detailed architectural mandates, refer to `GEMINI.md`.*
+- **Phase 5 (Scale & Monitoring):** Docker Swarm orchestration, Prometheus metrics, and Grafana dashboards.
+- **Phase 6 (Advanced Governance):** Action Group (Subreddit) extraction into a dedicated service, localized domain management, and crowdfunding integration.
