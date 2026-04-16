@@ -1,27 +1,26 @@
 spring:
-  config: 
-    import: "optional:file:.env[.properties]"
-
   application:
     name: gateway
 
   cloud:
-    compatibility-verifier:
-      enabled: false
+    gateway:
+      routes:
+        - id: user-service-auth
+          uri: ${USER_SERVICE_URI:http://localhost:8001}
+          predicates:
+            - Path=/api/v1/auth/**
+        - id: threads-service
+          uri: ${THREADS_SERVICE_URI:http://localhost:8002}
+          predicates:
+            - Path=/api/v1/threads/**
+        - id: voting-service
+          uri: ${VOTING_SERVICE_URI:http://localhost:8003}
+          predicates:
+            - Path=/api/v1/votes/**
+        - id: user-service-health
+          uri: ${USER_SERVICE_URI:http://localhost:8001}
+          predicates:
+            - Path=/health
 
-  threads:
-    virtual:
-      enabled: ${SPRING_THREADS_VIRTUAL_ENABLED:false}
-  r2dbc:
-    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5432/gateway_db}
-    username: ${SPRING_R2DBC_USERNAME:myuser}
-    password: ${SPRING_R2DBC_PASSWORD:mypassword}
-
-  data:
-    redis:
-      host: ${SPRING_DATA_REDIS_HOST:localhost}
-      port: 6379
-
-  sql:
-    init:
-        mode: always
+jwt:
+  secret: ${JWT_SECRET_KEY}

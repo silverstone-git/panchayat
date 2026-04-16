@@ -4,7 +4,8 @@ import './App.css';
 function App() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   const [feed, setFeed] = useState<any[]>([]);
   const [userVotes, setUserVotes] = useState<Record<string, number>>({});
   
@@ -13,15 +14,16 @@ function App() {
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/auth/signup', {
+    const res = await fetch('/api/v1/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username, password, email: `${username}@example.com` })
     });
     if (res.ok) {
       alert("Registered! Now log in.");
     } else {
-      alert("Registration failed");
+      const err = await res.json();
+      alert(`Registration failed: ${JSON.stringify(err.detail)}`);
     }
   };
 
@@ -31,23 +33,37 @@ function App() {
     params.append('username', username);
     params.append('password', password);
     
-    // Spring Security formLogin endpoint
-    const res = await fetch('/login', {
+    const res = await fetch('/api/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params
     });
     
     if (res.ok) {
+      const data = await res.json();
+      const authToken = data.access_token;
+      setToken(authToken);
+      localStorage.setItem('token', authToken);
       setIsLoggedIn(true);
-      fetchFeed();
     } else {
       alert("Login failed");
     }
   };
 
+  const handleLogout = () => {
+    setToken(null);
+    localStorage.removeItem('token');
+    setIsLoggedIn(false);
+    setFeed([]);
+    setUserVotes({});
+  };
+
   const fetchFeed = async () => {
-    const res = await fetch('/api/v1/threads/feed');
+    if (!token) return;
+
+    const res = await fetch('/api/v1/threads/feed', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
     if (res.ok) {
       const data = await res.json();
       setFeed(data);
@@ -55,27 +71,27 @@ function App() {
       const ids = data.map((item: any) => item.id || item._id).join(',');
       if (ids) {
         const voteRes = await fetch(`/api/v1/votes/my-votes?target_type=idea&target_ids=${ids}`, {
-          headers: {
-            'X-User-Id': username,
-            'X-User-Name': username
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
         if (voteRes.ok) {
           const voteData = await voteRes.json();
           setUserVotes(voteData);
         }
       }
+    } else if (res.status === 401) {
+      handleLogout();
     }
   };
 
   const postIdea = async (e: FormEvent) => {
     e.preventDefault();
+    if (!token) return;
+
     const res = await fetch('/api/v1/threads/ideas', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'X-User-Id': username,
-        'X-User-Name': username
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ title: newTitle, description: newDesc, category: 'general' })
     });
@@ -84,11 +100,13 @@ function App() {
       setNewDesc('');
       setTimeout(fetchFeed, 1000); // Wait a second for ES indexing
     } else {
-      alert("Failed to post idea. It might contain profanity.");
+      alert("Failed to post idea. It might contain profanity or you might be unauthorized.");
     }
   };
 
   const vote = async (id: string, targetDirection: number) => {
+    if (!token) return;
+
     const currentVote = userVotes[id] || 0;
     const newDirection = currentVote === targetDirection ? 0 : targetDirection;
     const delta = newDirection - currentVote;
@@ -111,8 +129,7 @@ function App() {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'X-User-Id': username,
-          'X-User-Name': username
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ direction: newDirection })
       });
@@ -154,7 +171,7 @@ function App() {
     <div className="app-container">
       <header>
         <h1>DemoVox Feed</h1>
-        <button onClick={() => { setIsLoggedIn(false); setFeed([]); setUserVotes({}); }}>Logout</button>
+        <button onClick={handleLogout}>Logout</button>
       </header>
       
       <div className="composer">

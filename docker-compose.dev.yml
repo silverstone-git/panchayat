@@ -20,12 +20,20 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - THREADS_SERVICE_URI=http://threads:8000
       - VOTING_SERVICE_URI=http://voting:8000
+      - USER_SERVICE_URI=http://user-service:8000
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     depends_on:
       postgres-db:
         condition: service_healthy
       redis-cache:
         condition: service_started
       kafka:
+        condition: service_started
+      user-service:
+        condition: service_started
+      threads:
+        condition: service_started
+      voting:
         condition: service_started
     networks:
       - demovox-network
@@ -75,6 +83,33 @@ services:
       - POSTGRES_DB=voting_db
       - REDIS_HOST=redis-cache
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
+      kafka:
+        condition: service_started
+    networks:
+      - demovox-network
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile-debug
+    container_name: demovox-user-service-dev
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./user-service:/app
+    env_file:
+      - ./gateway/.env
+    environment:
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_DB=users_db
+      - REDIS_HOST=redis-cache
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     depends_on:
       postgres-db:
         condition: service_healthy
