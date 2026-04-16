@@ -1,0 +1,1 @@
+CREATE DATABASE threads_db; CREATE DATABASE voting_db;

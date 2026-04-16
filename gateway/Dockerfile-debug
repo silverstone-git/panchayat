@@ -1,0 +1,9 @@
+FROM eclipse-temurin:26-jdk
+WORKDIR /app
+COPY .mvn .mvn
+COPY mvnw pom.xml ./
+RUN chmod +x ./mvnw
+RUN ./mvnw dependency:go-offline
+COPY src ./src
+# Using spring-boot:run which works well with devtools
+CMD ["./mvnw", "spring-boot:run", "-Dspring-boot.run.jvmArguments='-Dspring.devtools.restart.enabled=true'"]

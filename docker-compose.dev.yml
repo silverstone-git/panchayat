@@ -1,9 +1,16 @@
 services:
   gateway:
-    build: ./gateway
-    container_name: demovox-gateway
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile-debug
+    container_name: demovox-gateway-dev
     ports:
       - "8080:8080"
+      - "5005:5005" # Debug port if needed
+    volumes:
+      - ./gateway:/app
+      - /app/target # Exclude container's target directory from host
+      - ~/.m2:/root/.m2 # Cache maven dependencies
     env_file:
       - ./gateway/.env
     environment:
@@ -23,25 +30,15 @@ services:
     networks:
       - demovox-network
 
-  client:
-    build: ./client
-    container_name: demovox-client
-    ports:
-      - "5173:5173"
-    environment:
-      - GATEWAY_URL=http://gateway:8080
-      - THREADS_URL=http://threads:8000
-      - VOTING_URL=http://voting:8000
-    depends_on:
-      - gateway
-    networks:
-      - demovox-network
-
   threads:
-    build: ./threads
-    container_name: demovox-threads
+    build:
+      context: ./threads
+      dockerfile: Dockerfile-debug
+    container_name: demovox-threads-dev
     ports:
       - "8002:8000"
+    volumes:
+      - ./threads:/app
     env_file:
       - ./gateway/.env
     environment:
@@ -63,10 +60,14 @@ services:
       - demovox-network
 
   voting:
-    build: ./voting
-    container_name: demovox-voting
+    build:
+      context: ./voting
+      dockerfile: Dockerfile-debug
+    container_name: demovox-voting-dev
     ports:
       - "8003:8000"
+    volumes:
+      - ./voting:/app
     env_file:
       - ./gateway/.env
     environment:
@@ -84,13 +85,33 @@ services:
     networks:
       - demovox-network
 
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile-debug
+    container_name: demovox-client-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules # Don't overwrite container node_modules with host
+    environment:
+      - GATEWAY_URL=http://demovox-gateway-dev:8080
+      - THREADS_URL=http://demovox-threads-dev:8000
+      - VOTING_URL=http://demovox-voting-dev:8000
+    depends_on:
+      - gateway
+    networks:
+      - demovox-network
+
   postgres-db:
     image: postgres:15
-    container_name: postgres-db
+    container_name: postgres-db-dev
     env_file:
       - ./gateway/.env
     volumes:
       - ./postgres-init/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -103,7 +124,7 @@ services:
 
   redis-cache:
     image: redis:latest
-    container_name: redis-cache
+    container_name: redis-cache-dev
     ports:
       - "6379:6379"
     networks:
@@ -111,7 +132,7 @@ services:
 
   elasticsearch:
     image: elasticsearch:9.3.3
-    container_name: elasticsearch
+    container_name: elasticsearch-dev
     env_file:
       - ./gateway/.env
     environment:
@@ -130,12 +151,14 @@ services:
 
   kafka:
     image: apache/kafka:4.1.2
-    container_name: kafka
+    container_name: kafka-dev
     environment:
       KAFKA_NODE_ID: 1
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,EXTERNAL://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -148,3 +171,6 @@ services:
 networks:
   demovox-network:
     driver: bridge
+
+volumes:
+  postgres_data:
