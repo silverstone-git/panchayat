@@ -23,6 +23,7 @@ class SearchService:
                                     "category": {"type": "keyword"},
                                     "author_id": {"type": "keyword"},
                                     "vote_count": {"type": "integer"},
+                                    "status": {"type": "keyword"},
                                     "created_at": {"type": "date"}
                                 }
                             }
@@ -43,8 +44,13 @@ class SearchService:
         )
 
     async def search_ideas(self, query_text: str = None, category: str = None, sort: str = "new", page: int = 1, size: int = 10):
-        query = {"bool": {"must": []}}
+        query = {"bool": {"must": [], "filter": []}}
         
+        # Only show APPROVED or PENDING_MODERATION
+        query["bool"]["filter"].append({
+            "terms": {"status": ["APPROVED", "PENDING_MODERATION"]}
+        })
+
         if query_text:
             query["bool"]["must"].append({
                 "multi_match": {

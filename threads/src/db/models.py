@@ -33,6 +33,7 @@ class Comment(Base):
     vote_count: Mapped[int] = mapped_column(Integer, default=0)
     author_id: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="APPROVED")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     idea: Mapped["Idea"] = relationship(back_populates="comments")

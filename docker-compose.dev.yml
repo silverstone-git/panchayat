@@ -21,6 +21,8 @@ services:
       - THREADS_SERVICE_URI=http://threads:8000
       - VOTING_SERVICE_URI=http://voting:8000
       - USER_SERVICE_URI=http://user-service:8000
+      - MODERATION_SERVICE_URI=http://moderation-service:8000
+      - EXPERT_REVIEW_SERVICE_URI=http://expert-review-service:8000
     depends_on:
       postgres-db:
         condition: service_healthy
@@ -33,6 +35,10 @@ services:
       threads:
         condition: service_started
       voting:
+        condition: service_started
+      moderation-service:
+        condition: service_started
+      expert-review-service:
         condition: service_started
     networks:
       - demovox-network
@@ -54,6 +60,7 @@ services:
       - REDIS_HOST=redis-cache
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - MODERATION_SERVICE_URL=http://moderation-service:8000
     depends_on:
       postgres-db:
         condition: service_healthy
@@ -63,6 +70,88 @@ services:
         condition: service_started
       elasticsearch:
         condition: service_healthy
+      moderation-service:
+        condition: service_started
+    networks:
+      - demovox-network
+
+  moderation-service:
+    build:
+      context: ./moderation-service
+      dockerfile: Dockerfile-debug
+    container_name: demovox-moderation-dev
+    ports:
+      - "8005:8000"
+    volumes:
+      - ./moderation-service:/app
+    env_file:
+      - ./gateway/.env
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      kafka:
+        condition: service_started
+    networks:
+      - demovox-network
+
+  expert-review-service:
+    build:
+      context: ./expert-review-service
+      dockerfile: Dockerfile-debug
+    container_name: demovox-expert-review-dev
+    ports:
+      - "8006:8000"
+    volumes:
+      - ./expert-review-service:/app
+    env_file:
+      - ./gateway/.env
+    environment:
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_DB=expert_review_db
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - demovox-network
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile-debug
+    container_name: demovox-notification-dev
+    ports:
+      - "8007:8000"
+    volumes:
+      - ./notification-service:/app
+    env_file:
+      - ./gateway/.env
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      kafka:
+        condition: service_started
+    networks:
+      - demovox-network
+
+  gov-submit-service:
+    build:
+      context: ./gov-submit-service
+      dockerfile: Dockerfile-debug
+    container_name: demovox-gov-submit-dev
+    ports:
+      - "8008:8000"
+    volumes:
+      - ./gov-submit-service:/app
+    env_file:
+      - ./gateway/.env
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      kafka:
+        condition: service_started
     networks:
       - demovox-network
 

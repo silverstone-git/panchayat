@@ -21,6 +21,14 @@ spring:
           uri: ${VOTING_SERVICE_URI:http://localhost:8003}
           predicates:
             - Path=/api/v1/votes/**
+        - id: moderation-service
+          uri: ${MODERATION_SERVICE_URI:http://localhost:8005}
+          predicates:
+            - Path=/api/v1/moderation/**
+        - id: expert-review-service
+          uri: ${EXPERT_REVIEW_SERVICE_URI:http://localhost:8006}
+          predicates:
+            - Path=/api/v1/reviews/**
         - id: user-service-health
           uri: ${USER_SERVICE_URI:http://localhost:8001}
           predicates:

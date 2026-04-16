@@ -5,11 +5,21 @@ import uuid
 from src.db.models import Comment, Idea
 from src.schemas.comment import CommentCreate
 from src.services.kafka_service import kafka_service
+from src.services.moderation_client import moderation_client
 from src.core.config import settings
 from fastapi import HTTPException
 
 class CommentService:
     async def create_comment(self, db: AsyncSession, idea_id: UUID, comment_in: CommentCreate, author_id: str):
+        # 0. Moderation check
+        mod_result = await moderation_client.check_content(comment_in.content)
+        if mod_result.get("is_flagged"):
+            raise HTTPException(status_code=400, detail="Comment contains prohibited material.")
+
+        status = "APPROVED"
+        if mod_result.get("error"):
+            status = "PENDING_MODERATION"
+
         # 1. Verify idea exists
         idea_result = await db.execute(select(Idea).where(Idea.id == idea_id))
         idea = idea_result.scalar_one_or_none()
@@ -43,7 +53,8 @@ class CommentService:
             path=path,
             depth=depth,
             author_id=author_id,
-            content=comment_in.content
+            content=comment_in.content,
+            status=status
         )
         
         db.add(new_comment)
@@ -67,10 +78,11 @@ class CommentService:
         return new_comment
 
     async def get_comments_for_idea(self, db: AsyncSession, idea_id: UUID, sort: str = "new"):
-        # 1. Fetch all comments for the idea
+        # 1. Fetch all comments for the idea that are not flagged
         result = await db.execute(
             select(Comment)
             .where(Comment.idea_id == idea_id)
+            .where(Comment.status.in_(["APPROVED", "PENDING_MODERATION"]))
         )
         all_comments = result.scalars().all()
         
