@@ -13,4 +13,5 @@ dependencies = [
     "asyncpg>=0.29.0",
     "aiokafka>=0.10.0",
     "alt-profanity-check>=1.4.1.post1",
+    "httpx>=0.28.1",
 ]

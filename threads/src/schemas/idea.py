@@ -15,12 +15,14 @@ class IdeaResponse(BaseModel):
     category: str
     author_id: str
     vote_count: int
+    status: str
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
 class FeedResponse(BaseModel):
-    ideas: List[IdeaResponse]
+    items: List[IdeaResponse]
     total: int
     page: int
     size: int
+    has_more: bool

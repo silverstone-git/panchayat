@@ -75,7 +75,7 @@ class SearchService:
             from_=(page - 1) * size,
             size=size
         )
-        return resp['hits']['hits']
+        return resp['hits']['hits'], resp['hits']['total']['value']
 
     async def close(self):
         await self.client.close()

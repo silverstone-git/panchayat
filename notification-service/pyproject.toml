@@ -10,4 +10,5 @@ dependencies = [
     "pydantic>=2.6.4",
     "pydantic-settings>=2.2.1",
     "aiokafka>=0.10.0",
+    "httpx>=0.28.1",
 ]

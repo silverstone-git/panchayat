@@ -347,16 +347,25 @@ function App() {
           />
         </div>
         <div className="nav-actions">
-          <ThemeToggle theme={theme} toggle={toggleTheme} />
-          {profile && <Avatar url={profile.profile_data?.avatar_url} />}
-          <button className="btn-outline" style={{ padding: '4px 12px', fontSize: '0.8rem' }} onClick={handleLogout}>Logout</button>
+          <button className="icon-btn" onClick={toggleTheme} title="Toggle Mode">
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
+          
+          {profile && (
+            <div className="user-profile-menu">
+              <span className="username-tag">{profile.username}</span>
+              <Avatar size={28} url={profile.profile_data?.avatar_url} />
+            </div>
+          )}
+          
+          <button className="logout-btn" onClick={handleLogout}>Logout</button>
         </div>
       </header>
 
       <div className="app-wrapper">
         <aside className="left-sidebar">
           <div className={`nav-item ${!activeCategory ? 'active' : ''}`} onClick={() => handleCategoryChange(null)}>🏠 Home</div>
-          <div className="nav-item">📈 Popular</div>
+          <div className="nav-item">🔥 Popular</div>
           <div className="nav-item">🛡️ Moderation</div>
           
           <h5>SUB-PANCHAYATS</h5>
@@ -372,9 +381,9 @@ function App() {
         </aside>
 
         <main className="main-feed">
-          <div className="create-post-card" onClick={() => setShowModal(true)} style={{ cursor: 'pointer' }}>
+          <div className="create-post-card" onClick={() => setShowModal(true)}>
             <Avatar url={profile?.profile_data?.avatar_url} />
-            <input className="composer-input" style={{ pointerEvents: 'none' }} placeholder="Create Post" readOnly />
+            <input placeholder="Create Post" readOnly />
           </div>
 
           <div className="feed-list">
@@ -382,23 +391,38 @@ function App() {
             
             {feed.map(item => (
               <div key={item.id} className="idea-card" onClick={() => setExpandedIdea(expandedIdea === item.id ? null : item.id)}>
-                <div className="author-line">
-                  <Avatar size={20} url={item.author_avatar} />
-                  <span>p/{item.category} • Posted by u/{item.author_id}</span>
-                </div>
-                <h4>{item.title}</h4>
-                <div className="content">{item.description}</div>
-                <div className="actions">
-                  <div className="action-btn" onClick={(e) => { e.stopPropagation(); vote(item.id, 1); }} style={{ color: userVotes[item.id] === 1 ? 'var(--secondary-color)' : '' }}>
-                    ▲ {item.vote_count}
-                  </div>
-                  <div className="action-btn" onClick={(e) => { e.stopPropagation(); vote(item.id, -1); }} style={{ color: userVotes[item.id] === -1 ? 'var(--primary-color)' : '' }}>
+                <div className="vote-sidebar" onClick={(e) => e.stopPropagation()}>
+                  <button 
+                    className="vote-btn up" 
+                    onClick={() => vote(item.id, 1)}
+                    style={{ color: userVotes[item.id] === 1 ? 'var(--secondary-color)' : '' }}
+                  >
+                    ▲
+                  </button>
+                  <span className="vote-count" style={{ color: userVotes[item.id] === 1 ? 'var(--secondary-color)' : userVotes[item.id] === -1 ? '#7193ff' : '' }}>
+                    {item.vote_count}
+                  </span>
+                  <button 
+                    className="vote-btn down" 
+                    onClick={() => vote(item.id, -1)}
+                    style={{ color: userVotes[item.id] === -1 ? '#7193ff' : '' }}
+                  >
                     ▼
-                  </div>
-                  <div className="action-btn">💬 {item.comment_count || 0} Comments</div>
-                  <div className="action-btn">🚀 Share</div>
+                  </button>
                 </div>
-                {expandedIdea === item.id && token && <Comments ideaId={item.id} token={token} />}
+                <div className="card-main-content">
+                  <div className="author-line">
+                    <Avatar size={20} url={item.author_avatar} />
+                    <span>p/{item.category} • Posted by u/{item.author_id}</span>
+                  </div>
+                  <h4>{item.title}</h4>
+                  <div className="content">{item.description}</div>
+                  <div className="actions">
+                    <div className="action-btn">💬 {item.comment_count || 0} Comments</div>
+                    <div className="action-btn">🚀 Share</div>
+                  </div>
+                  {expandedIdea === item.id && token && <Comments ideaId={item.id} token={token} />}
+                </div>
               </div>
             ))}
           </div>
@@ -441,17 +465,17 @@ function App() {
           <div className="sidebar-box">
             <h5>Active in Panchayat</h5>
             <div style={{ fontSize: '0.9rem' }}>
-              <div style={{ padding: '8px 0', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
+              <div className="active-in-item">
                 <span>#RoadSafety</span>
-                <span style={{ color: 'var(--muted-text)', fontSize: '0.7rem' }}>2.4k active</span>
+                <span>2.4k active</span>
               </div>
-              <div style={{ padding: '8px 0', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
+              <div className="active-in-item">
                 <span>#CleanWater</span>
-                <span style={{ color: 'var(--muted-text)', fontSize: '0.7rem' }}>1.8k active</span>
+                <span>1.8k active</span>
               </div>
-              <div style={{ padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
+              <div className="active-in-item">
                 <span>#UrbanParks</span>
-                <span style={{ color: 'var(--muted-text)', fontSize: '0.7rem' }}>900 active</span>
+                <span>900 active</span>
               </div>
             </div>
           </div>

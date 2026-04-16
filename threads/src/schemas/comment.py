@@ -16,6 +16,7 @@ class CommentResponse(BaseModel):
     vote_count: int
     author_id: str
     content: str
+    status: str
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

@@ -1,15 +1,23 @@
+@import url('https://rsms.me/inter/inter.css');
+
 :root {
-  --bg-color: #ffffff;
-  --text-color: #1a1a1b;
+  --bg-color: #dae0e6; /* Reddit-style light grey background */
+  --text-color: #1c1e21;
   --card-bg: #ffffff;
-  --border-color: #edeff1;
+  --border-color: #ccc;
   --header-bg: #ffffff;
-  --sidebar-bg: #ffffff;
+  --sidebar-bg: transparent;
   --primary-color: #0079d3;
+  --primary-hover: #1484d6;
   --secondary-color: #ff4500;
-  --muted-text: #7c7c7c;
-  --hover-color: #f6f7f8;
-  --input-bg: #f6f7f8;
+  --muted-text: #787c7e;
+  --hover-bg: rgba(0, 121, 211, 0.05);
+  --active-bg: #f6f7f8;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
 }
 
 [data-theme='dark'] {
@@ -18,30 +26,29 @@
   --card-bg: #1a1a1b;
   --border-color: #343536;
   --header-bg: #1a1a1b;
-  --sidebar-bg: #1a1a1b;
+  --sidebar-bg: transparent;
   --primary-color: #d7dadc;
+  --primary-hover: #ffffff;
   --secondary-color: #ff4500;
   --muted-text: #818384;
-  --hover-color: #272729;
-  --input-bg: #272729;
+  --hover-bg: #272729;
+  --active-bg: #272729;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
   margin: 0;
   padding: 0;
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.2s ease;
+  letter-spacing: -0.011em;
 }
 
-.app-wrapper {
-  display: grid;
-  grid-template-columns: 240px 1fr 312px;
-  max-width: 1200px;
-  margin: 0 auto;
-  gap: 20px;
-  padding-top: 50px;
+.app-layout {
+  min-height: 100vh;
 }
 
 header.top-nav {
@@ -56,201 +63,272 @@ header.top-nav {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .logo {
-  font-weight: bold;
-  font-size: 1.2rem;
+  font-weight: 800;
+  font-size: 1.3rem;
   color: var(--secondary-color);
   display: flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
 }
 
 .search-bar {
   flex-grow: 1;
   max-width: 600px;
-  margin: 0 20px;
+  margin: 0 40px;
 }
 
 .search-bar input {
   width: 100%;
-  background: var(--input-bg);
+  background: var(--active-bg);
   border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 6px 16px;
   color: var(--text-color);
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
 }
 
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: var(--card-bg);
 }
 
-/* Sidebar styles */
+.app-wrapper {
+  display: grid;
+  grid-template-columns: 240px 1fr 312px;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 24px;
+  padding: 68px 20px 20px 20px;
+}
+
+/* Sidebars */
 .left-sidebar {
-  padding: 20px;
   position: sticky;
-  top: 48px;
-  height: calc(100vh - 48px);
+  top: 68px;
+  height: calc(100vh - 88px);
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  border-radius: 4px;
+  padding: 10px 16px;
+  border-radius: 24px; /* Pill shape like Twitter */
   cursor: pointer;
   color: var(--text-color);
-  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.2s ease;
+  margin-bottom: 4px;
 }
 
 .nav-item:hover {
-  background: var(--hover-color);
+  background: var(--hover-bg);
+  color: var(--primary-color);
 }
 
 .nav-item.active {
-  font-weight: bold;
+  background: var(--active-bg);
+  font-weight: 700;
+  color: var(--secondary-color);
 }
 
-/* Main Feed */
-.main-feed {
-  padding: 20px 0;
+.left-sidebar h5 {
+  padding: 20px 16px 8px;
+  font-size: 0.7rem;
+  color: var(--muted-text);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
+/* Feed & Cards */
 .idea-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 12px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: border-color 0.2s;
+  border-radius: var(--radius-sm); /* Sharper Reddit-style cards */
+  margin-bottom: 12px;
+  display: flex;
+  transition: border-color 0.1s;
 }
 
 .idea-card:hover {
-  border-color: #878a8c;
+  border-color: #898989;
 }
 
-.idea-card h4 {
-  margin: 8px 0;
-  font-size: 1.1rem;
+/* Vote Sidebar inside Card */
+.vote-sidebar {
+  width: 40px;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  border-right: 1px solid transparent;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
 }
 
-.idea-card .author-line {
+[data-theme='dark'] .vote-sidebar {
+  background: rgba(255,255,255,0.03);
+}
+
+.card-main-content {
+  flex-grow: 1;
+  padding: 12px 12px 8px 12px;
+}
+
+.author-line {
   font-size: 0.75rem;
   color: var(--muted-text);
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
+.idea-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
 .idea-card .content {
-  margin-bottom: 12px;
+  font-size: 0.9rem;
   line-height: 1.4;
+  margin-bottom: 12px;
 }
 
 .idea-card .actions {
   display: flex;
-  gap: 16px;
-  color: var(--muted-text);
-  font-size: 0.8rem;
-  font-weight: bold;
+  gap: 4px;
 }
 
 .action-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 6px;
+  gap: 6px;
+  padding: 6px 8px;
   border-radius: 2px;
+  color: var(--muted-text);
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
 }
 
 .action-btn:hover {
-  background: var(--hover-color);
+  background: rgba(0,0,0,0.05);
 }
 
-/* Right Sidebar */
-.right-sidebar {
-  padding: 20px 0;
-  position: sticky;
-  top: 48px;
+[data-theme='dark'] .action-btn:hover {
+  background: rgba(255,255,255,0.05);
 }
 
+/* Vote Buttons Stylized */
+.vote-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--muted-text);
+  font-size: 1.2rem;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.1s;
+}
+
+.vote-btn:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+.vote-btn.up:hover { color: var(--secondary-color); }
+.vote-btn.down:hover { color: #7193ff; }
+
+.vote-count {
+  font-size: 0.8rem;
+  font-weight: 800;
+  margin: 4px 0;
+}
+
+/* Sidebar Boxes */
 .sidebar-box {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 12px;
   margin-bottom: 16px;
 }
 
 .sidebar-box h5 {
   margin: 0 0 12px 0;
-  text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
   color: var(--muted-text);
 }
 
-/* Avatar Styles */
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #ccc;
+.active-in-item {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin: 0 -8px;
 }
 
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.active-in-item:hover {
+  background: var(--hover-bg);
 }
 
-.avatar-selection {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin: 10px 0;
+.active-in-item span:last-child {
+  color: var(--muted-text);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
+/* Avatar PERSONALIZATION */
 .avatar-option {
-  width: 48px;
-  height: 48px;
+  width: 100%;
+  aspect-ratio: 1;
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
+  transition: transform 0.1s;
+}
+
+.avatar-option:hover {
+  transform: scale(1.05);
 }
 
 .avatar-option.selected {
   border-color: var(--secondary-color);
+  box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 4px var(--secondary-color);
 }
 
-/* Composer */
+/* Composer Card */
 .create-post-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 8px;
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
 .create-post-card input {
   flex-grow: 1;
-  background: var(--input-bg);
+  background: var(--active-bg);
   border: 1px solid var(--border-color);
-  padding: 8px 12px;
   border-radius: 4px;
+  padding: 8px 12px;
   color: var(--text-color);
+  cursor: pointer;
 }
 
 /* Buttons */
@@ -260,9 +338,12 @@ header.top-nav {
   border: none;
   border-radius: 20px;
   padding: 6px 16px;
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
 }
+
+.btn-primary:hover { background: var(--primary-hover); }
 
 .btn-outline {
   background: transparent;
@@ -270,46 +351,91 @@ header.top-nav {
   border: 1px solid var(--primary-color);
   border-radius: 20px;
   padding: 4px 12px;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
 }
 
-.theme-toggle {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.2rem;
-  padding: 4px;
+.btn-outline:hover { background: var(--hover-bg); }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+.nav-actions {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
-/* Modal styles for creating post */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
+.icon-btn {
+  background: none;
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: background 0.2s;
+  color: var(--text-color);
 }
 
-.modal-content {
-  background: var(--card-bg);
-  width: 90%;
-  max-width: 600px;
-  border-radius: 6px;
-  padding: 20px;
+.icon-btn:hover {
+  background: var(--hover-bg);
 }
 
-.modal-header {
+.user-profile-menu {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 10px;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px 2px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  background: var(--card-bg);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.user-profile-menu:hover {
+  border-color: #898989;
+  background: var(--active-bg);
+}
+
+.username-tag {
+  font-size: 0.85rem;
+  font-weight: 700;
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  color: var(--muted-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 16px;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  color: var(--secondary-color);
+  background: rgba(255, 69, 0, 0.1);
 }
