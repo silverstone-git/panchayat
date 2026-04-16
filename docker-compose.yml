@@ -116,13 +116,15 @@ services:
       - ./gateway/.env
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=true
+      - xpack.security.enabled=false
       - xpack.security.http.ssl.enabled=false
+      - "ES_JAVA_OPTS=-Xms768m -Xmx768m"
+      - cluster.routing.allocation.disk.threshold_enabled=false
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health -u elastic:$${ELASTIC_PASSWORD} | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"' || exit 1"]
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"' || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     ports:
       - "9200:9200"
     networks:
@@ -133,9 +135,11 @@ services:
     container_name: kafka
     environment:
       KAFKA_NODE_ID: 1
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,EXTERNAL://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT

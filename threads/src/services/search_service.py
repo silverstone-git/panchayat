@@ -4,35 +4,42 @@ from src.core.config import settings
 class SearchService:
     def __init__(self):
         self.client = AsyncElasticsearch(
-            settings.ELASTICSEARCH_URL,
-            basic_auth=(settings.ELASTIC_USER, settings.ELASTIC_PASSWORD),
-            verify_certs=False  # Disabled for local development with self-signed certs
+            settings.ELASTICSEARCH_URL
         )
 
     async def create_index(self):
-        index_exists = await self.client.indices.exists(index=settings.ELASTICSEARCH_INDEX)
-        if not index_exists:
-            await self.client.indices.create(
-                index=settings.ELASTICSEARCH_INDEX,
-                body={
-                    "mappings": {
-                        "properties": {
-                            "title": {"type": "text"},
-                            "description": {"type": "text"},
-                            "category": {"type": "keyword"},
-                            "author_id": {"type": "keyword"},
-                            "vote_count": {"type": "integer"},
-                            "created_at": {"type": "date"}
+        import asyncio
+        for i in range(10):
+            try:
+                index_exists = await self.client.indices.exists(index=settings.ELSEARCH_INDEX if hasattr(settings, "ELSEARCH_INDEX") else settings.ELASTICSEARCH_INDEX)
+                if not index_exists:
+                    await self.client.indices.create(
+                        index=settings.ELSEARCH_INDEX if hasattr(settings, "ELSEARCH_INDEX") else settings.ELASTICSEARCH_INDEX,
+                        body={
+                            "mappings": {
+                                "properties": {
+                                    "title": {"type": "text"},
+                                    "description": {"type": "text"},
+                                    "category": {"type": "keyword"},
+                                    "author_id": {"type": "keyword"},
+                                    "vote_count": {"type": "integer"},
+                                    "created_at": {"type": "date"}
+                                }
+                            }
                         }
-                    }
-                }
-            )
+                    )
+                return
+            except Exception as e:
+                print(f"Waiting for Elasticsearch... ({e})")
+                await asyncio.sleep(3)
+        raise Exception("Could not connect to Elasticsearch after multiple retries")
 
     async def index_idea(self, idea_id: str, data: dict):
         await self.client.index(
             index=settings.ELASTICSEARCH_INDEX,
             id=idea_id,
-            document=data
+            document=data,
+            refresh=True
         )
 
     async def search_ideas(self, query_text: str = None, category: str = None, sort: str = "new", page: int = 1, size: int = 10):
