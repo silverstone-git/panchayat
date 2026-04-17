@@ -491,7 +491,20 @@ function App() {
             </div>
             <form onSubmit={postIdea}>
               <div style={{ marginBottom: 20 }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '800', marginBottom: 8, color: 'var(--muted-text)' }}>TITLE</label>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', marginBottom: 8, color: 'var(--muted-text)' }}>CHOOSE A CATEGORY</label>
+                <select 
+                  className="composer-input" 
+                  value={activeCategory || 'general'} 
+                  onChange={e => setActiveCategory(e.target.value)}
+                  style={{ appearance: 'none', cursor: 'pointer' }}
+                >
+                  {CATEGORIES.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', marginBottom: 8, color: 'var(--muted-text)' }}>TITLE</label>
                 <input 
                   className="composer-input" 
                   placeholder="What's the issue or solution?" 
@@ -501,7 +514,7 @@ function App() {
                 />
               </div>
               <div style={{ marginBottom: 24 }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '800', marginBottom: 8, color: 'var(--muted-text)' }}>DESCRIPTION</label>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', marginBottom: 8, color: 'var(--muted-text)' }}>DESCRIPTION</label>
                 <textarea 
                   className="composer-input" 
                   placeholder="Provide more details about your proposal..." 
@@ -512,7 +525,7 @@ function App() {
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                <button className="btn-outline" type="button" onClick={() => setShowModal(false)}>Cancel</button>
+                <button className="btn-outline" type="button" onClick={() => setShowModal(false)} style={{ border: 'none' }}>Cancel</button>
                 <button className="btn-primary" type="submit">Publish Idea</button>
               </div>
             </form>
