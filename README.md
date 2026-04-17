@@ -5,28 +5,40 @@
 ---
 
 ## ✨ Features
-- **Idea Submission:** Users can propose structured ideas/solutions with automatic profanity checks.
-- **Real-Time Feeds:** High-performance, full-text searchable feeds powered by Elasticsearch and cached via Redis.
-- **Consensus Engine (Voting):** High-concurrency voting system using Redis Lua scripting for atomic, idempotent operations. Features optimistic UI updates for instant user feedback.
-- **Event-Driven:** Microservices communicate asynchronously via Apache Kafka.
+- **Modern Hybrid UI:** A "Reddit x Twitter" inspired interface with a 3-column layout, glassmorphism, and a persistent Light/Dark mode.
+- **Smart Idea Submission:** Structured proposal workflow with built-in ML-driven moderation and category-based routing.
+- **Real-Time Paginated Feeds:** High-performance feeds powered by Elasticsearch, supporting keyword search, category filtering, and sorting (Latest vs. Top Voted).
+- **Expert Review Workflow:** Automated assignment of proposals to specialized experts for scoring and consensus validation.
+- **Automated Civic Action:** Consensus-backed ideas (Expert Score > 7.0) are automatically prepared for submission to government portals.
+- **Event-Driven Architecture:** Decoupled microservices communicating asynchronously via Apache Kafka for maximum resilience.
+- **Identity & Gamification:** JWT-based authentication with profile personalization (avatars) and a civic XP/Leveling system.
 
 ## 🛠️ Tech Stack
 Panchayat uses a polyglot microservice architecture designed for maximum concurrency and scale.
 
 **Frontend:**
-- **React + TypeScript:** Lightweight, snappy user interface.
-- **Vite:** High-speed development server and bundler.
+- **React + TypeScript:** High-speed, responsive user interface.
+- **Vite:** Blazing fast build tool and dev server.
+- **CSS3:** Modern design system using variables, glassmorphism, and pill-shaped navigation.
 
-**Backend Services:**
-- **API Gateway (Java 26 + Spring Cloud Gateway):** The reactive front door handling authentication, routing, and identity propagation.
-- **Threads & Voting Services (Python 3.12+ + FastAPI):** Blazing fast, async-native microservices managed by the `uv` toolchain.
+**Backend Ecosystem (Python 3.12+ / FastAPI):**
+- **Threads Service:** Core content management (Ideas, Comments) and Elasticsearch integration.
+- **Voting Service:** Atomic high-speed voting logic using Redis Lua scripting.
+- **User Service:** Identity provider, JWT issuance, and gamification engine.
+- **Moderation Service:** ML-based content filtering (alt-profanity-check).
+- **Expert Review Service:** Panel assignments, scoring rubrics, and quorum logic.
+- **Notification Service:** Centralized, event-driven push and email notification engine.
+- **Gov Submit Service:** Bridge for automated government portal submissions.
+
+**Edge Layer:**
+- **API Gateway (Java 21 + Spring Cloud Gateway):** The reactive front door handling JWT verification, routing, and identity propagation.
 
 **Infrastructure:**
-- **PostgreSQL:** Primary relational datastore (asyncpg/R2DBC).
+- **PostgreSQL:** Primary relational storage (asyncpg).
 - **Redis:** High-speed caching, atomic counters, and write-behind queues.
-- **Elasticsearch:** Fast, geo-aware, full-text search indexing.
-- **Apache Kafka (KRaft):** Central event bus for decoupled inter-service communication (e.g., `VOTE_CAST`, `IDEA_CREATED`).
-- **Docker & Docker Compose:** Containerized orchestration for development and production.
+- **Elasticsearch:** Real-time full-text search and geo-filtering.
+- **Apache Kafka (KRaft):** High-throughput event bus for inter-service communication.
+- **Docker & Docker Compose:** Standardized container orchestration.
 
 ---
 
@@ -34,36 +46,36 @@ Panchayat uses a polyglot microservice architecture designed for maximum concurr
 
 ### 1. Prerequisites
 - Docker and Docker Compose
-- Ensure ports `8080`, `8002`, `8003`, `5173`, `5432`, `6379`, `9200`, and `9092` are available.
+- Available Ports: `8080` (Gateway), `5173` (Client), `5432` (Postgres), `6379` (Redis), `9200` (Elasticsearch), `9092` (Kafka).
 
 ### 2. Environment Setup
-Create a `.env` file for the gateway (which is shared among the services in dev mode):
+Create a `.env` file for the gateway (shared among services in dev mode):
 ```bash
 cp .env.example gateway/.env
 ```
-*(Make sure to update the passwords inside `gateway/.env` if desired).*
+*(Ensure `JWT_SECRET_KEY` is at least 32 characters long).*
 
 ### 3. Run the Ecosystem
-Spin up the entire platform in development mode with live-reloading enabled:
+Spin up the entire platform:
 ```bash
 docker-compose -f docker-compose.dev.yml up --build
 ```
 
 ### 4. Access the Application
 - **Web UI:** [http://localhost:5173](http://localhost:5173)
-- **API Gateway:** `http://localhost:8080` (Proxied automatically by the Web UI)
+- **API Gateway:** `http://localhost:8080` (Proxied via Web UI)
 
 ---
 
 ## 🔮 Project Status
-Panchayat is being built in phases.
 
 **Completed Phases:**
-- **Phase 1 (Walking Skeleton):** Basic end-to-end traversal.
-- **Phase 2 (Consensus Engine):** High-concurrency voting and Kafka integration.
-- **Phase 3 (Identity & Trust):** Dedicated User Service, JWT authentication, and Gamification.
-- **Phase 4 (Action & Moderation):** ML-driven moderation, Expert Review workflows, Notification engine, Gov-Submit simulation, and a modern UI overhaul with paginated search.
+- **Phase 1-2:** Walking Skeleton & Consensus Engine.
+- **Phase 3:** Identity, Trust, and Gamification.
+- **Phase 4:** Moderation, Expert Review, Notifications, and Gov-Submit workflows + UI Overhaul.
 
-**Upcoming Phases:**
-- **Phase 5 (Scale & Monitoring):** Docker Swarm orchestration, Prometheus metrics, and Grafana dashboards.
-- **Phase 6 (Advanced Governance):** Action Group (Subreddit) extraction into a dedicated service, localized domain management, and crowdfunding integration.
+**Next Up:**
+- **Phase 5 (Scale & Monitoring):** Docker Swarm, Prometheus, and Grafana dashboards.
+- **Phase 6 (Advanced Governance):** Action Group (Sub-Panchayat) extraction and crowdfunding integration.
+
+*For detailed architectural mandates, refer to `GEMINI.md`.*
