@@ -4,6 +4,8 @@ from src.core.config import settings
 from src.services.kafka_service import kafka_service
 from src.services.event_handler import handle_event
 from src.api.v1.reviews import router as reviews_router
+from src.db.session import engine
+from src.db.models import Base
 
 app = FastAPI(title=settings.PROJECT_NAME)
 
@@ -11,6 +13,10 @@ app.include_router(reviews_router, prefix="/api/v1/reviews", tags=["reviews"])
 
 @app.on_event("startup")
 async def startup_event():
+    # Create tables
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        
     # Start Kafka Producer
     await kafka_service.start()
     # Start Kafka Consumer in background

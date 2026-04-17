@@ -165,6 +165,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'new' | 'trending'>('new');
 
   // UI State
   const [showModal, setShowModal] = useState(false);
@@ -183,11 +184,11 @@ function App() {
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
-  const fetchFeed = useCallback(async (pageNum: number, query: string, category: string | null, append = false) => {
+  const fetchFeed = useCallback(async (pageNum: number, query: string, category: string | null, sort: string, append = false) => {
     if (!token || loading) return;
     setLoading(true);
     try {
-      let url = `/api/v1/threads/feed?page=${pageNum}&size=10`;
+      let url = `/api/v1/threads/feed?page=${pageNum}&size=10&sort=${sort}`;
       if (query) url += `&q=${encodeURIComponent(query)}`;
       if (category) url += `&category=${encodeURIComponent(category)}`;
 
@@ -220,7 +221,7 @@ function App() {
     if (isLoggedIn) {
       fetchProfile();
       setPage(1);
-      fetchFeed(1, '', null, false);
+      fetchFeed(1, '', null, 'new', false);
     }
   }, [isLoggedIn]);
 
@@ -229,7 +230,7 @@ function App() {
     if (!isLoggedIn) return;
     const timer = setTimeout(() => {
       setPage(1);
-      fetchFeed(1, searchQuery, activeCategory, false);
+      fetchFeed(1, searchQuery, activeCategory, sortBy, false);
     }, 400);
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -238,13 +239,20 @@ function App() {
   const handleCategoryChange = (catId: string | null) => {
     setActiveCategory(catId);
     setPage(1);
-    fetchFeed(1, searchQuery, catId, false);
+    fetchFeed(1, searchQuery, catId, sortBy, false);
+  };
+
+  // Handle Sort Change
+  const handleSortChange = (newSort: 'new' | 'trending') => {
+    setSortBy(newSort);
+    setPage(1);
+    fetchFeed(1, searchQuery, activeCategory, newSort, false);
   };
 
   const loadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
-    fetchFeed(nextPage, searchQuery, activeCategory, true);
+    fetchFeed(nextPage, searchQuery, activeCategory, sortBy, true);
   };
 
   const handleLogin = async (e: FormEvent) => {
@@ -386,6 +394,23 @@ function App() {
             <input placeholder="Create Post" readOnly />
           </div>
 
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16, padding: '0 4px' }}>
+            <button 
+              className={`nav-item ${sortBy === 'new' ? 'active' : ''}`} 
+              onClick={() => handleSortChange('new')}
+              style={{ padding: '6px 16px', fontSize: '0.85rem' }}
+            >
+              🕒 Latest
+            </button>
+            <button 
+              className={`nav-item ${sortBy === 'trending' ? 'active' : ''}`} 
+              onClick={() => handleSortChange('trending')}
+              style={{ padding: '6px 16px', fontSize: '0.85rem' }}
+            >
+              🔥 Top Voted
+            </button>
+          </div>
+
           <div className="feed-list">
             {feed.length === 0 && !loading && <p style={{ textAlign: 'center', padding: 40, color: 'var(--muted-text)' }}>No ideas found. Be the first to share one!</p>}
             
@@ -489,8 +514,8 @@ function App() {
               <h3 style={{ margin: 0 }}>Propose a New Idea</h3>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-color)', fontSize: '1.8rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
             </div>
-            <form onSubmit={postIdea}>
-              <div style={{ marginBottom: 20 }}>
+            <form onSubmit={postIdea} className="modal-form">
+              <div className="form-group">
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', marginBottom: 8, color: 'var(--muted-text)' }}>CHOOSE A CATEGORY</label>
                 <select 
                   className="composer-input" 
@@ -503,7 +528,7 @@ function App() {
                   ))}
                 </select>
               </div>
-              <div style={{ marginBottom: 20 }}>
+              <div className="form-group">
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', marginBottom: 8, color: 'var(--muted-text)' }}>TITLE</label>
                 <input 
                   className="composer-input" 
@@ -513,7 +538,7 @@ function App() {
                   required 
                 />
               </div>
-              <div style={{ marginBottom: 24 }}>
+              <div className="form-group" style={{ marginBottom: 24 }}>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '800', marginBottom: 8, color: 'var(--muted-text)' }}>DESCRIPTION</label>
                 <textarea 
                   className="composer-input" 

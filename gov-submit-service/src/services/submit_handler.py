@@ -3,7 +3,7 @@ from src.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-async def handle_review_event(event: dict):
+async def handle_review_event(event: dict, topic: str):
     event_type = event.get("type")
     data = event.get("data")
 

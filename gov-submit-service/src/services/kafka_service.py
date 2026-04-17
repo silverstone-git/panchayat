@@ -14,10 +14,11 @@ class KafkaService:
         self.consumer = AIOKafkaConsumer(
             *topics,
             bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
-            group_id="notification-group",
+            group_id="gov-submit-group-v2",
             auto_offset_reset="earliest"
         )
         await self.consumer.start()
+        logger.info(f"Connected to Kafka and subscribed to {topics}")
         try:
             async for msg in self.consumer:
                 event = json.loads(msg.value.decode("utf-8"))
