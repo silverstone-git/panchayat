@@ -13,6 +13,13 @@ class CacheService:
         data = await self.client.get(key)
         return json.loads(data) if data else None
 
+    async def clear_cache_for_idea(self, idea_id: str):
+        # This is a placeholder for a more sophisticated cache invalidation strategy.
+        # In a real-world scenario, you would have a mapping of which cache keys
+        # an idea belongs to, or you would have a more structured key naming scheme.
+        # For now, we will continue to clear the entire feed cache.
+        await self.clear_feed_cache()
+
     async def clear_feed_cache(self):
         # Clear all feed-related cache keys
         keys = await self.client.keys("feed:*")

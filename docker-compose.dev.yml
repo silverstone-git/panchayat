@@ -29,7 +29,7 @@ services:
       redis-cache:
         condition: service_started
       kafka:
-        condition: service_started
+        condition: service_healthy
       user-service:
         condition: service_started
       threads:
@@ -67,7 +67,7 @@ services:
       redis-cache:
         condition: service_started
       kafka:
-        condition: service_started
+        condition: service_healthy
       elasticsearch:
         condition: service_healthy
       moderation-service:
@@ -90,7 +90,7 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
     networks:
       - demovox-network
 
@@ -113,7 +113,7 @@ services:
       postgres-db:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
     networks:
       - demovox-network
 
@@ -132,7 +132,7 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
     networks:
       - demovox-network
 
@@ -151,7 +151,7 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
     networks:
       - demovox-network
 
@@ -177,7 +177,7 @@ services:
       redis-cache:
         condition: service_started
       kafka:
-        condition: service_started
+        condition: service_healthy
     networks:
       - demovox-network
 
@@ -203,7 +203,7 @@ services:
       redis-cache:
         condition: service_started
       kafka:
-        condition: service_started
+        condition: service_healthy
     networks:
       - demovox-network
 
@@ -289,6 +289,11 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     ports:
       - "9092:9092"
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
     networks:
       - demovox-network
 

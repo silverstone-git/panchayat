@@ -1,3 +1,8 @@
+from pydantic import BaseModel, Field
+
+class ReportRequest(BaseModel):
+    reason: str = Field(..., max_length=500)
+
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.session import get_db

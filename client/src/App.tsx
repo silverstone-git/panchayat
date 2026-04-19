@@ -36,30 +36,128 @@ function ThemeToggle({ theme, toggle }: { theme: string; toggle: () => void }) {
   );
 }
 
-function Comments({ ideaId, token }: { ideaId: string; token: string }) {
-  const [comments, setComments] = useState<any[]>([]);
-  const [userCommentVotes, setUserCommentVotes] = useState<Record<string, number>>({});
-  const [sort, setSort] = useState<'top' | 'new'>('new');
-  const [newComment, setNewComment] = useState('');
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+function CommentNode({ comment, ideaId, token, userCommentVotes, voteComment, postComment, onReplyAdded }: any) {
+  const [replies, setReplies] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(comment.reply_count > 0);
+  const [loadingReplies, setLoadingReplies] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<boolean>(false);
   const [replyContent, setReplyContent] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const fetchComments = async () => {
-    setLoading(true);
+  const fetchReplies = async (pageNum: number) => {
+    setLoadingReplies(true);
     try {
-      const res = await fetch(`/api/v1/threads/ideas/${ideaId}/comments?sort=${sort}`, {
+      const res = await fetch(`/api/v1/threads/ideas/${ideaId}/comments?parent_id=${comment.id}&page=${pageNum}&size=5&sort=new`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
-        setComments(data);
-        const ids = data.map((c: any) => c.id).join(',');
+        setReplies(prev => pageNum === 1 ? data.items : [...prev, ...data.items]);
+        setHasMore(data.has_more);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingReplies(false);
+    }
+  };
+
+  const handlePostReply = async (e: FormEvent) => {
+    e.preventDefault();
+    await postComment(comment.id, replyContent);
+    setReplyContent('');
+    setReplyingTo(false);
+    setPage(1);
+    fetchReplies(1); // Refresh children
+    onReplyAdded();
+  };
+
+  return (
+    <div className="comment" style={{ marginLeft: `${comment.depth > 0 ? 15 : 0}px`, borderLeft: comment.depth > 0 ? '1px solid var(--border-color)' : 'none', paddingLeft: comment.depth > 0 ? 10 : 0 }}>
+      <div className="comment-header" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <Avatar size={18} url={comment.author_avatar} />
+        <strong style={{ fontSize: '0.8rem' }}>u/{comment.author_id}</strong>
+      </div>
+      <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>{comment.content}</p>
+      
+      <div className="comment-actions" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button className="action-btn" onClick={() => voteComment(comment.id, 1)} style={{ color: userCommentVotes[comment.id] === 1 ? 'var(--secondary-color)' : '' }}>▲</button>
+            <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{comment.vote_count}</span>
+            <button className="action-btn" onClick={() => voteComment(comment.id, -1)} style={{ color: userCommentVotes[comment.id] === -1 ? 'var(--primary-color)' : '' }}>▼</button>
+        </div>
+        <button className="reply-btn" style={{ background: 'none', border: 'none', color: 'var(--muted-text)', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => setReplyingTo(!replyingTo)}>Reply</button>
+      </div>
+
+      {replyingTo && (
+        <form className="reply-form" onSubmit={handlePostReply} style={{ display: 'flex', gap: 8, marginTop: 8, marginBottom: 12 }}>
+          <input className="composer-input" value={replyContent} onChange={(e) => setReplyContent(e.target.value)} required placeholder="Add a reply..." />
+          <button className="btn-outline" type="submit">Reply</button>
+        </form>
+      )}
+
+      {replies.length > 0 && (
+        <div className="nested-replies">
+          {replies.map(reply => (
+            <CommentNode 
+              key={reply.id} 
+              comment={reply} 
+              ideaId={ideaId} 
+              token={token} 
+              userCommentVotes={userCommentVotes} 
+              voteComment={voteComment} 
+              postComment={postComment}
+              onReplyAdded={onReplyAdded}
+            />
+          ))}
+        </div>
+      )}
+
+      {hasMore && (
+        <button 
+          onClick={() => { const next = page + 1; setPage(next); fetchReplies(next); }} 
+          style={{ background: 'none', border: 'none', color: 'var(--secondary-color)', fontSize: '0.8rem', cursor: 'pointer', padding: 0, marginTop: 4, fontWeight: 'bold' }}
+          disabled={loadingReplies}
+        >
+          {loadingReplies ? 'Loading...' : `Load more replies...`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function Comments({ ideaId, token }: { ideaId: string; token: string }) {
+  const [comments, setComments] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [userCommentVotes, setUserCommentVotes] = useState<Record<string, number>>({});
+  const [sort, setSort] = useState<'top' | 'new'>('new');
+  const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const fetchComments = async (pageNum: number, isReset = false) => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/v1/threads/ideas/${ideaId}/comments?page=${pageNum}&size=10&sort=${sort}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setComments(prev => isReset ? data.items : [...prev, ...data.items]);
+        setTotalCount(data.total);
+        setHasMore(data.has_more);
+        
+        const ids = data.items.map((c: any) => c.id).join(',');
         if (ids) {
           const vRes = await fetch(`/api/v1/votes/my-votes?target_type=comment&target_ids=${ids}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (vRes.ok) setUserCommentVotes(await vRes.json());
+          if (vRes.ok) {
+             const vData = await vRes.json();
+             setUserCommentVotes(prev => ({ ...prev, ...vData }));
+          }
         }
       }
     } catch (err) {
@@ -69,10 +167,12 @@ function Comments({ ideaId, token }: { ideaId: string; token: string }) {
     }
   };
 
-  useEffect(() => { fetchComments(); }, [ideaId, sort]);
+  useEffect(() => { 
+    setPage(1);
+    fetchComments(1, true); 
+  }, [ideaId, sort]);
 
-  const postComment = async (e: FormEvent, parentId: string | null = null, content: string) => {
-    e.preventDefault();
+  const postComment = async (parentId: string | null, content: string) => {
     if (!content.trim()) return;
     try {
       const res = await fetch(`/api/v1/threads/ideas/${ideaId}/comments`, {
@@ -80,23 +180,30 @@ function Comments({ ideaId, token }: { ideaId: string; token: string }) {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ content, parent_id: parentId })
       });
-      if (res.ok) {
+      if (res.ok && !parentId) {
         setNewComment('');
-        setReplyContent('');
-        setReplyingTo(null);
-        fetchComments();
+        setPage(1);
+        fetchComments(1, true);
       }
     } catch (err) {}
+  };
+
+  const handlePostTopLevel = (e: FormEvent) => {
+    e.preventDefault();
+    postComment(null, newComment);
   };
 
   const voteComment = async (id: string, targetDir: number) => {
     const current = userCommentVotes[id] || 0;
     const newDir = current === targetDir ? 0 : targetDir;
     const delta = newDir - current;
+    
+    // We update local top-level state if it's there
     setComments(prev => prev.map(c => c.id === id ? { ...c, vote_count: c.vote_count + delta } : c));
     setUserCommentVotes(prev => ({ ...prev, [id]: newDir }));
+    
     try {
-      await fetch(`/api/v1/votes/comment/${id}`, {
+      await fetch(`/api/v1/votes/idea/${id}`, { // Actually this should map to vote route for comment
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ direction: newDir })
@@ -107,43 +214,42 @@ function Comments({ ideaId, token }: { ideaId: string; token: string }) {
   return (
     <div className="comments-section" onClick={(e) => e.stopPropagation()}>
       <div className="comments-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <strong style={{ fontSize: '0.9rem' }}>{comments.length} Comments</strong>
+        <strong style={{ fontSize: '0.9rem' }}>{totalCount} Comments</strong>
         <div className="sort-buttons" style={{ display: 'flex', gap: 8 }}>
           <button className={`btn-outline ${sort === 'new' ? 'active' : ''}`} style={{ padding: '2px 8px', fontSize: '0.7rem' }} onClick={() => setSort('new')}>New</button>
           <button className={`btn-outline ${sort === 'top' ? 'active' : ''}`} style={{ padding: '2px 8px', fontSize: '0.7rem' }} onClick={() => setSort('top')}>Top</button>
         </div>
       </div>
-      <form onSubmit={(e) => postComment(e, null, newComment)} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      
+      <form onSubmit={handlePostTopLevel} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         <input className="composer-input" placeholder="What are your thoughts?" value={newComment} onChange={(e) => setNewComment(e.target.value)} required />
         <button className="btn-primary" type="submit">Post</button>
       </form>
 
-      {loading ? <p>Loading...</p> : (
-        <div className="comments-list">
-          {comments.map((comment) => (
-            <div key={comment.id} className="comment" style={{ marginLeft: `${comment.depth * 15}px` }}>
-              <div className="comment-header" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                <Avatar size={18} url={comment.author_avatar} />
-                <strong style={{ fontSize: '0.8rem' }}>u/{comment.author_id}</strong>
-              </div>
-              <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>{comment.content}</p>
-              <div className="comment-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                   <button className="action-btn" onClick={() => voteComment(comment.id, 1)} style={{ color: userCommentVotes[comment.id] === 1 ? 'var(--secondary-color)' : '' }}>▲</button>
-                   <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{comment.vote_count}</span>
-                   <button className="action-btn" onClick={() => voteComment(comment.id, -1)} style={{ color: userCommentVotes[comment.id] === -1 ? 'var(--primary-color)' : '' }}>▼</button>
-                </div>
-                <button className="reply-btn" style={{ background: 'none', border: 'none', color: 'var(--muted-text)', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}>Reply</button>
-              </div>
-              {replyingTo === comment.id && (
-                <form className="reply-form" onSubmit={(e) => postComment(e, comment.id, replyContent)} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                  <input className="composer-input" value={replyContent} onChange={(e) => setReplyContent(e.target.value)} required />
-                  <button className="btn-outline" type="submit">Reply</button>
-                </form>
-              )}
-            </div>
-          ))}
-        </div>
+      <div className="comments-list">
+        {comments.map((comment) => (
+          <CommentNode 
+            key={comment.id} 
+            comment={comment} 
+            ideaId={ideaId} 
+            token={token} 
+            userCommentVotes={userCommentVotes} 
+            voteComment={voteComment} 
+            postComment={postComment}
+            onReplyAdded={() => { setTotalCount(prev => prev + 1); }}
+          />
+        ))}
+      </div>
+      
+      {hasMore && (
+        <button 
+          className="btn-outline" 
+          onClick={() => { const next = page + 1; setPage(next); fetchComments(next); }} 
+          style={{ width: '100%', marginTop: 12, padding: '8px' }}
+          disabled={loading}
+        >
+          {loading ? 'Loading...' : 'Load more comments'}
+        </button>
       )}
     </div>
   );

@@ -15,7 +15,7 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret:your-secret-key-change-me}")
+    @Value("${jwt.secret.key}")
     private String secret;
 
     public Claims validateToken(String token) {

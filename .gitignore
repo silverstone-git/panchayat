@@ -1,8 +1,35 @@
 GEMINI.md
 TODO.md
-__pycache__/
-.venv/
-plan.jsx
-.env
-conductor/
 SUMMARY.md
+conductor/
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Java / Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Node.js
+node_modules/
+/client/dist
+/client/playwright-report/
+/client/test-results/
+
+# Utility Scripts
+sanity_check.py
+patch.py
+deep_e2e_test.py
+plan.jsx
+
+# Docker local overrides
+docker-compose.override.yml
+# docker-compose.swarm-dev.yml  <-- I will leave these for now as they seem important for the project structure

@@ -29,3 +29,13 @@ async def get_user_profile(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+@router.get("/id/{user_id}", response_model=User)
+async def get_user_by_id_endpoint(
+    user_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    user = await user_service.get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user

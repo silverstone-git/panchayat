@@ -20,6 +20,7 @@ class UserInDB(UserBase):
     id: int
     xp: int
     level: int
+    reputation: float
     is_active: bool
     created_at: datetime
     updated_at: Optional[datetime] = None

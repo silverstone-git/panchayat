@@ -5,5 +5,5 @@ class VoteRequest(BaseModel):
 
 class VoteResponse(BaseModel):
     target_id: str
-    total_votes: int
+    total_votes: float
     user_vote: int

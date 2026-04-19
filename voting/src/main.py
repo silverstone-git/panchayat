@@ -14,8 +14,13 @@ import asyncio
 import json
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 from src.api.v1 import votes
 from src.services.kafka_service import kafka_service
+from src.core.tracing import setup_tracer
+from opentelemetry.instrumentation.fastapi import OpenTelemetryMiddleware
+from src.core.tracing import setup_tracer
+from opentelemetry.instrumentation.fastapi import OpenTelemetryMiddleware
 from src.services.vote_service import vote_service
 from src.db.session import async_session, engine
 from src.db.models import Base, VoteRecord
@@ -58,6 +63,8 @@ async def persist_worker():
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("Service starting up...")
+    setup_tracer()
+    setup_tracer()
     await kafka_service.start()
     
     async with engine.begin() as conn:
@@ -84,6 +91,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+Instrumentator().instrument(app).expose(app)
+app.add_middleware(OpenTelemetryMiddleware)
+app.add_middleware(OpenTelemetryMiddleware)
 
 app.include_router(votes.router, prefix="/api/v1")
 

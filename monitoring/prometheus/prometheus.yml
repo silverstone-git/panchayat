@@ -1,0 +1,81 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'gateway'
+    metrics_path: '/actuator/prometheus'
+    dns_sd_configs:
+      - names: ['gateway']
+        type: 'A'
+        port: 8080
+
+  - job_name: 'threads'
+    dns_sd_configs:
+      - names: ['threads']
+        type: 'A'
+        port: 8000
+
+  - job_name: 'voting'
+    dns_sd_configs:
+      - names: ['voting']
+        type: 'A'
+        port: 8000
+
+  - job_name: 'user-service'
+    dns_sd_configs:
+      - names: ['user-service']
+        type: 'A'
+        port: 8000
+
+  - job_name: 'moderation-service'
+    dns_sd_configs:
+      - names: ['moderation-service']
+        type: 'A'
+        port: 8000
+
+  - job_name: 'expert-review-service'
+    dns_sd_configs:
+      - names: ['expert-review-service']
+        type: 'A'
+        port: 8000
+
+  - job_name: 'notification-service'
+    dns_sd_configs:
+      - names: ['notification-service']
+        type: 'A'
+        port: 8000
+
+  - job_name: 'gov-submit-service'
+    dns_sd_configs:
+      - names: ['gov-submit-service']
+        type: 'A'
+        port: 8000
+
+  - job_name: 'postgres-exporter'
+    dns_sd_configs:
+      - names: ['postgres-exporter']
+        type: 'A'
+        port: 9187
+
+  - job_name: 'redis-exporter'
+    dns_sd_configs:
+      - names: ['redis-exporter']
+        type: 'A'
+        port: 9121
+
+  - job_name: 'elasticsearch-exporter'
+    dns_sd_configs:
+      - names: ['elasticsearch-exporter']
+        type: 'A'
+        port: 9114
+
+  - job_name: 'kafka-exporter'
+    dns_sd_configs:
+      - names: ['kafka-exporter']
+        type: 'A'
+        port: 9308

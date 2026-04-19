@@ -1,0 +1,230 @@
+
+
+services:
+  gateway:
+    image: panchayat-gateway:latest
+    build:
+      context: ./gateway
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - USER_SERVICE_URI=http://user-service:8000
+      - THREADS_SERVICE_URI=http://threads:8000
+      - VOTING_SERVICE_URI=http://voting:8000
+      - MODERATION_SERVICE_URI=http://moderation-service:8000
+      - EXPERT_REVIEW_SERVICE_URI=http://expert-review-service:8000
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+    networks:
+      - panchayat-network
+
+  threads:
+    image: panchayat-threads:latest
+    build:
+      context: ./threads
+    environment:
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_DB=threads_db
+      - REDIS_HOST=redis-cache
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - MODERATION_SERVICE_URL=http://moderation-service:8000
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+    networks:
+      - panchayat-network
+
+  voting:
+    image: panchayat-voting:latest
+    build:
+      context: ./voting
+    environment:
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_DB=voting_db
+      - REDIS_HOST=redis-cache
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    deploy:
+      replicas: 3
+    networks:
+      - panchayat-network
+
+  user-service:
+    image: panchayat-user-service:latest
+    build:
+      context: ./user-service
+    environment:
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_DB=users_db
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    deploy:
+      replicas: 2
+    networks:
+      - panchayat-network
+
+  moderation-service:
+    image: panchayat-moderation:latest
+    build:
+      context: ./moderation-service
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    deploy:
+      replicas: 2
+    networks:
+      - panchayat-network
+
+  expert-review-service:
+    image: panchayat-expert-review:latest
+    build:
+      context: ./expert-review-service
+    environment:
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_DB=expert_review_db
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    deploy:
+      replicas: 2
+    networks:
+      - panchayat-network
+
+  notification-service:
+    image: panchayat-notification:latest
+    build:
+      context: ./notification-service
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    networks:
+      - panchayat-network
+
+  gov-submit-service:
+    image: panchayat-gov-submit:latest
+    build:
+      context: ./gov-submit-service
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    networks:
+      - panchayat-network
+
+  # Infrastructure
+  postgres-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=panchayat_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init/init.sql:/docker-entrypoint-initdb.d/init.sql
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - panchayat-network
+
+  redis-cache:
+    image: redis:alpine
+    networks:
+      - panchayat-network
+
+  elasticsearch:
+    image: elasticsearch:8.11.3
+    environment:
+      - discovery.type=single-node
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    networks:
+      - panchayat-network
+
+  kafka:
+    image: apache/kafka:4.1.2
+    environment:
+      KAFKA_NODE_ID: 1
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - panchayat-network
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    networks:
+      - panchayat-network
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - panchayat-network
+
+  # Exporters
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/panchayat_db?sslmode=disable
+    networks:
+      - panchayat-network
+
+  redis-exporter:
+    image: oliver006/redis_exporter
+    environment:
+      - REDIS_ADDR=redis-cache:6379
+    networks:
+      - panchayat-network
+
+  elasticsearch-exporter:
+    image: prometheuscommunity/elasticsearch-exporter
+    command:
+      - '--es.uri=http://elasticsearch:9200'
+    networks:
+      - panchayat-network
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter
+    command:
+      - '--kafka.server=kafka:29092'
+    networks:
+      - panchayat-network
+
+networks:
+  panchayat-network:
+    driver: overlay
+
+volumes:
+  postgres_data:

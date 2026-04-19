@@ -18,5 +18,13 @@ class CommentResponse(BaseModel):
     content: str
     status: str
     created_at: datetime
+    reply_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
+
+class PaginatedCommentResponse(BaseModel):
+    items: List[CommentResponse]
+    total: int
+    page: int
+    size: int
+    has_more: bool

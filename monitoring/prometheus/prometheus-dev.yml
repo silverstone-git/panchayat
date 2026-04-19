@@ -1,0 +1,60 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'gateway'
+    metrics_path: '/actuator/prometheus'
+    dns_sd_configs:
+      - names: ['gateway']
+        type: 'A'
+        port: 8080
+
+  - job_name: 'threads'
+    dns_sd_configs:
+      - names: ['threads']
+        type: 'A'
+        port: 8000
+
+  - job_name: 'voting'
+    dns_sd_configs:
+      - names: ['voting']
+        type: 'A'
+        port: 8000
+
+  - job_name: 'user-service'
+    dns_sd_configs:
+      - names: ['user-service']
+        type: 'A'
+        port: 8000
+
+  - job_name: 'moderation-service'
+    dns_sd_configs:
+      - names: ['moderation-service']
+        type: 'A'
+        port: 8000
+
+  - job_name: 'expert-review-service'
+    metrics_path: '/actuator/prometheus'
+    dns_sd_configs:
+      - names: ['expert-review-service']
+        type: 'A'
+        port: 8000
+
+  - job_name: 'notification-service'
+    metrics_path: '/actuator/prometheus'
+    dns_sd_configs:
+      - names: ['notification-service']
+        type: 'A'
+        port: 8000
+
+  - job_name: 'gov-submit-service'
+    metrics_path: '/actuator/prometheus'
+    dns_sd_configs:
+      - names: ['gov-submit-service']
+        type: 'A'
+        port: 8000

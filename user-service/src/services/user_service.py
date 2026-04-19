@@ -1,8 +1,11 @@
+import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from src.db.models import User
 from src.schemas.user import UserCreate, UserUpdate
 from src.core.security import get_password_hash
+
+logger = logging.getLogger(__name__)
 
 class UserService:
     async def get_user_by_username(self, db: AsyncSession, username: str):
@@ -57,6 +60,24 @@ class UserService:
         db.add(user)
         await db.commit()
         await db.refresh(user)
+        return user
+
+
+    async def get_user_by_id(self, db: AsyncSession, user_id: int):
+        result = await db.execute(select(User).where(User.id == user_id))
+        return result.scalars().first()
+
+
+    async def adjust_reputation(self, db: AsyncSession, user_id: int, amount: float):
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalars().first()
+        if user:
+            new_reputation = user.reputation + amount
+            user.reputation = max(0.0, min(10.0, new_reputation))
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+            logger.info(f"Adjusted reputation for user {user_id} by {amount}. New reputation: {user.reputation}")
         return user
 
 user_service = UserService()

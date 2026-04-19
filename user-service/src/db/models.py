@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, JSON, Float
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql import func
 
@@ -16,6 +16,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     xp = Column(Integer, default=0)
     level = Column(Integer, default=1)
+    reputation = Column(Float, default=5.0)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

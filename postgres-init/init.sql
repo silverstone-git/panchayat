@@ -4,3 +4,6 @@ CREATE DATABASE users_db;
 CREATE DATABASE expert_review_db;
 CREATE DATABASE gateway_db;
 CREATE DATABASE moderation_db;
+CREATE DATABASE notification_db;
+CREATE DATABASE gov_submit_db;
+CREATE DATABASE crowdfund_db;

@@ -26,9 +26,13 @@ Panchayat uses a polyglot microservice architecture designed for maximum concurr
 - **Voting Service:** Atomic high-speed voting logic using Redis Lua scripting.
 - **User Service:** Identity provider, JWT issuance, and gamification engine.
 - **Moderation Service:** ML-based content filtering (alt-profanity-check).
+
+
+**Orchestration & Advanced Services (Java 21 / Spring MVC):**
 - **Expert Review Service:** Panel assignments, scoring rubrics, and quorum logic.
 - **Notification Service:** Centralized, event-driven push and email notification engine.
 - **Gov Submit Service:** Bridge for automated government portal submissions.
+- **Crowdfund Service:** Lobbying fund campaigns per approved idea.
 
 **Edge Layer:**
 - **API Gateway (Java 21 + Spring Cloud Gateway):** The reactive front door handling JWT verification, routing, and identity propagation.
@@ -73,9 +77,9 @@ docker-compose -f docker-compose.dev.yml up --build
 - **Phase 1-2:** Walking Skeleton & Consensus Engine.
 - **Phase 3:** Identity, Trust, and Gamification.
 - **Phase 4:** Moderation, Expert Review, Notifications, and Gov-Submit workflows + UI Overhaul.
+- **Phase 5:** Scale & Monitoring (Docker Swarm, Prometheus, Grafana).
 
 **Next Up:**
-- **Phase 5 (Scale & Monitoring):** Docker Swarm, Prometheus, and Grafana dashboards.
 - **Phase 6 (Advanced Governance):** Action Group (Sub-Panchayat) extraction and crowdfunding integration.
 
 *For detailed architectural mandates, refer to `GEMINI.md`.*

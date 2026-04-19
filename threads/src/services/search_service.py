@@ -3,18 +3,22 @@ from src.core.config import settings
 
 class SearchService:
     def __init__(self):
+        # Elasticsearch 8.x with security enabled
         self.client = AsyncElasticsearch(
-            settings.ELASTICSEARCH_URL
+            settings.ELASTICSEARCH_URL,
+            basic_auth=(settings.ELASTIC_USER, settings.ELASTIC_PASSWORD),
+            verify_certs=False # For local development
         )
 
     async def create_index(self):
         import asyncio
+        import logging
         for i in range(10):
             try:
-                index_exists = await self.client.indices.exists(index=settings.ELSEARCH_INDEX if hasattr(settings, "ELSEARCH_INDEX") else settings.ELASTICSEARCH_INDEX)
+                index_exists = await self.client.indices.exists(index=settings.ELASTICSEARCH_INDEX)
                 if not index_exists:
                     await self.client.indices.create(
-                        index=settings.ELSEARCH_INDEX if hasattr(settings, "ELSEARCH_INDEX") else settings.ELASTICSEARCH_INDEX,
+                        index=settings.ELASTICSEARCH_INDEX,
                         body={
                             "mappings": {
                                 "properties": {
@@ -31,7 +35,7 @@ class SearchService:
                     )
                 return
             except Exception as e:
-                print(f"Waiting for Elasticsearch... ({e})")
+                logging.error(f"Waiting for Elasticsearch... ({e})")
                 await asyncio.sleep(3)
         raise Exception("Could not connect to Elasticsearch after multiple retries")
 

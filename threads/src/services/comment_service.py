@@ -77,42 +77,62 @@ class CommentService:
 
         return new_comment
 
-    async def get_comments_for_idea(self, db: AsyncSession, idea_id: UUID, sort: str = "new"):
-        # 1. Fetch all comments for the idea that are not flagged
-        result = await db.execute(
+    async def get_comments_for_idea_paginated(self, db: AsyncSession, idea_id: UUID, parent_id: UUID | None = None, sort: str = "new", page: int = 1, size: int = 10):
+        from sqlalchemy import func, desc, asc
+        
+        # Determine sorting column and direction
+        sort_col = desc(Comment.vote_count) if sort == "top" else desc(Comment.created_at)
+        
+        # Base query for the comments at this level
+        query = (
             select(Comment)
             .where(Comment.idea_id == idea_id)
             .where(Comment.status.in_(["APPROVED", "PENDING_MODERATION"]))
+            .where(Comment.parent_id == parent_id)
         )
-        all_comments = result.scalars().all()
         
-        if not all_comments:
-            return []
-
-        # 2. Build adjacency list for tree construction
-        from collections import defaultdict
-        children_map = defaultdict(list)
-        for comment in all_comments:
-            children_map[comment.parent_id].append(comment)
-
-        # 3. Sort logic for siblings
-        def sort_siblings(siblings):
-            if sort == "top":
-                siblings.sort(key=lambda x: x.vote_count, reverse=True)
-            else: # default to "new"
-                siblings.sort(key=lambda x: x.created_at, reverse=True)
-
-        # 4. DFS to flatten the tree in the requested order
-        sorted_list = []
-        def traverse(parent_id):
-            siblings = children_map[parent_id]
-            sort_siblings(siblings)
-            for child in siblings:
-                sorted_list.append(child)
-                traverse(child.id)
-
-        traverse(None)
-        return sorted_list
+        # Get total count at this level
+        total_result = await db.execute(select(func.count()).select_from(query.subquery()))
+        total = total_result.scalar_one()
+        
+        # Fetch paginated items
+        paginated_query = query.order_by(sort_col).offset((page - 1) * size).limit(size)
+        items_result = await db.execute(paginated_query)
+        items = items_result.scalars().all()
+        
+        # For each item, fetch its reply count
+        response_items = []
+        for item in items:
+            reply_count_result = await db.execute(
+                select(func.count(Comment.id))
+                .where(Comment.parent_id == item.id)
+                .where(Comment.status.in_(["APPROVED", "PENDING_MODERATION"]))
+            )
+            reply_count = reply_count_result.scalar_one()
+            
+            # Create a dict representation and append the reply_count
+            item_dict = {
+                "id": item.id,
+                "idea_id": item.idea_id,
+                "parent_id": item.parent_id,
+                "path": item.path,
+                "depth": item.depth,
+                "vote_count": item.vote_count,
+                "author_id": item.author_id,
+                "content": item.content,
+                "status": item.status,
+                "created_at": item.created_at,
+                "reply_count": reply_count
+            }
+            response_items.append(item_dict)
+            
+        return {
+            "items": response_items,
+            "total": total,
+            "page": page,
+            "size": size,
+            "has_more": (page * size) < total
+        }
 
     async def update_vote_count(self, db: AsyncSession, comment_id: UUID, new_count: int):
         from sqlalchemy import update
@@ -124,4 +144,16 @@ class CommentService:
         await db.execute(stmt)
         await db.commit()
 
+
+    async def hide_comment(self, db: AsyncSession, comment_id: UUID):
+        from sqlalchemy import update
+        stmt = (
+            update(Comment)
+            .where(Comment.id == comment_id)
+            .values(status="HIDDEN_BY_COMMUNITY")
+        )
+        await db.execute(stmt)
+        await db.commit()
+
 comment_service = CommentService()
+

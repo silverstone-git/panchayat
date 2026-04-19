@@ -117,4 +117,34 @@ class IdeaService:
                     }
                 )
 
+
+    async def hide_idea(self, db: AsyncSession, idea_id: str):
+        stmt = (
+            update(Idea)
+            .where(Idea.id == idea_id)
+            .values(status="HIDDEN_BY_COMMUNITY")
+            .returning(Idea)
+        )
+        result = await db.execute(stmt)
+        idea = result.scalar_one_or_none()
+        await db.commit()
+
+        if idea:
+            # Sync with ES
+            await search_service.index_idea(
+                str(idea.id),
+                {
+                    "title": idea.title,
+                    "description": idea.description,
+                    "category": idea.category,
+                    "author_id": idea.author_id,
+                    "vote_count": idea.vote_count,
+                    "status": idea.status,
+                    "created_at": idea.created_at.isoformat()
+                }
+            )
+            # Invalidate Cache
+            await cache_service.clear_feed_cache()
+
 idea_service = IdeaService()
+

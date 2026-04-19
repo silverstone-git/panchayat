@@ -13,8 +13,13 @@ logger = logging.getLogger("threads")
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 from src.api.v1 import ideas, feed, comments
 from src.services.kafka_service import kafka_service
+from src.core.tracing import setup_tracer
+from opentelemetry.instrumentation.fastapi import OpenTelemetryMiddleware
+from src.core.tracing import setup_tracer
+from opentelemetry.instrumentation.fastapi import OpenTelemetryMiddleware
 from src.services.search_service import search_service
 from src.services.cache_service import cache_service
 from src.services.idea_service import idea_service
@@ -22,13 +27,14 @@ from src.services.comment_service import comment_service
 from src.db.session import async_session, engine
 from src.db.models import Base
 
-async def handle_vote_event(payload):
+
+async def handle_kafka_event(payload):
     logger.info(f"Received Kafka event: {payload}")
-    event_type = payload.get("event_type")
+    event_type = payload.get("type") or payload.get("event_type")
     data = payload.get("data", {})
 
     if event_type == "VOTE_CAST":
-        target_type = data.get("target_type", "idea") # Default to idea for backward compatibility
+        target_type = data.get("target_type", "idea")
         target_id = data.get("target_id") or data.get("idea_id")
         new_count = data.get("new_count")
 
@@ -37,6 +43,8 @@ async def handle_vote_event(payload):
                 if target_type == "idea":
                     logger.info(f"Updating idea {target_id} vote_count to {new_count}")
                     await idea_service.update_vote_count(db, target_id, new_count)
+                    await cache_service.clear_cache_for_idea(target_id)
+
                 elif target_type == "comment":
                     logger.info(f"Updating comment {target_id} vote_count to {new_count}")
                     from uuid import UUID
@@ -44,17 +52,38 @@ async def handle_vote_event(payload):
         else:
             logger.warning(f"Malformed VOTE_CAST data: {data}")
 
+    elif event_type == "CONTENT_HIDDEN":
+        target_type = data.get("target_type")
+        target_id = data.get("target_id")
+        
+        if target_id:
+            async with async_session() as db:
+                if target_type == "idea":
+                    logger.warning(f"Hiding idea {target_id} due to community reports")
+                    await idea_service.hide_idea(db, target_id)
+                elif target_type == "comment":
+                    logger.warning(f"Hiding comment {target_id} due to community reports")
+                    from uuid import UUID
+                    await comment_service.hide_comment(db, UUID(target_id))
+        else:
+            logger.warning(f"Malformed CONTENT_HIDDEN data: {data}")
+
     else:
         logger.debug(f"Ignoring event type: {event_type}")
 
 async def start_kafka_consumer():
     logger.info("Starting Kafka consumer...")
-    await kafka_service.start_consumer(handle_vote_event)
+    await kafka_service.start_consumer(handle_kafka_event)
+
+    logger.info("Starting Kafka consumer...")
+    await kafka_service.start_consumer(handle_kafka_event)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("Service starting up...")
+    setup_tracer()
+    setup_tracer()
     await kafka_service.start()
     await search_service.create_index()
     
@@ -83,6 +112,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+Instrumentator().instrument(app).expose(app)
+app.add_middleware(OpenTelemetryMiddleware)
+app.add_middleware(OpenTelemetryMiddleware)
 
 app.include_router(ideas.router, prefix="/api/v1/threads")
 app.include_router(feed.router, prefix="/api/v1/threads")

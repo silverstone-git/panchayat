@@ -10,9 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
-
 import com.chintan.gateway.service.JwtService;
-
 import io.jsonwebtoken.Claims;
 import reactor.core.publisher.Mono;
 
@@ -24,14 +22,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtService jwtService;
 
-    // Paths that don't require authentication
     private static final List<String> EXCLUDED_PATHS = List.of(
-        "/api/v1/auth/signup",
-        "/api/v1/auth/login",
-        "/auth/signup",
-        "/auth/login",
-        "/login",
-        "/health"
+        "/api/v1/auth",
+        "/health",
+        "/api/v1/threads/feed",
+        "/api/v1/users"
     );
 
     public JwtAuthenticationFilter(JwtService jwtService) {
@@ -41,9 +36,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
-        
-        // Skip authentication for excluded paths
-        if (EXCLUDED_PATHS.stream().anyMatch(path::contains)) {
+        log.info("Request path: {}", path);
+        log.info("EXCLUDED_PATHS: {}", EXCLUDED_PATHS);
+
+        if (EXCLUDED_PATHS.stream().anyMatch(path::startsWith)) {
+            log.info("Path '{}' is EXCLUDED. Skipping auth.", path);
             return chain.filter(exchange);
         }
 
@@ -55,8 +52,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         }
 
         String token = authHeader.substring(7);
+        
         try {
             Claims claims = jwtService.validateToken(token);
+            
             if (jwtService.isTokenExpired(claims)) {
                 log.warn("Token expired for path: {}", path);
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
@@ -65,24 +64,22 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
             String username = claims.getSubject();
             Number userId = claims.get("user_id", Number.class);
-
+            
             if (username == null || userId == null) {
                 log.warn("Invalid token payload for path: {}", path);
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
 
-            // Propagate identity headers
             ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                 .header("X-User-Id", userId.toString())
                 .header("X-User-Name", username)
                 .build();
 
-            log.info("Authenticated user {} for path {}", username, path);
             return chain.filter(exchange.mutate().request(mutatedRequest).build());
 
         } catch (Exception e) {
-            log.error("JWT validation failed: {}", e.getMessage());
+            log.error("JWT validation failed for path: {}", path, e);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
@@ -90,6 +87,6 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -100; // Run before other filters
+        return -100;
     }
 }
