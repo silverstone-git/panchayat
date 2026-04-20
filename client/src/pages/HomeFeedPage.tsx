@@ -10,7 +10,8 @@ import { CreatePostModal } from '../components/feed/CreatePostModal';
 export function HomeFeedPage({ token, profile, updateAvatar, searchQuery }: any) {
   const navigate = useNavigate();
   const {
-    feed, userVotes, hasMore, loading,
+    feed, setFeed,
+    userVotes, hasMore, loading,
     setSearchQuery,
     activeCategory, handleCategoryChange,
     sortBy, handleSortChange,
@@ -18,7 +19,6 @@ export function HomeFeedPage({ token, profile, updateAvatar, searchQuery }: any)
   } = useFeed(token, true);
 
   const { trendingIdea, loading: loadingTrending } = useTrending(token);
-
   const [showModal, setShowModal] = useState(false);
 
   React.useEffect(() => {
@@ -26,6 +26,10 @@ export function HomeFeedPage({ token, profile, updateAvatar, searchQuery }: any)
   }, [searchQuery, setSearchQuery]);
 
   const displayHero = !activeCategory && !searchQuery && !loadingTrending && trendingIdea;
+
+  const handleOptimisticPost = (newIdea: any) => {
+    setFeed(prev => [newIdea, ...prev]);
+  };
 
   return (
     <main className="max-w-7xl mx-auto px-6 pt-24 grid grid-cols-1 md:grid-cols-12 gap-8 pb-24">
@@ -37,7 +41,6 @@ export function HomeFeedPage({ token, profile, updateAvatar, searchQuery }: any)
 
       <div className="col-span-1 md:col-span-9 lg:col-span-7 flex flex-col space-y-6">
         
-        {/* Featured Hero Section (Asymmetric Layout) */}
         {displayHero && (
           <section className="grid grid-cols-1 md:grid-cols-12 gap-8 items-end mb-4 animate-in fade-in duration-700">
             <div className="md:col-span-7 space-y-6">
@@ -87,9 +90,9 @@ export function HomeFeedPage({ token, profile, updateAvatar, searchQuery }: any)
           token={token} 
           activeCategory={activeCategory} 
           onClose={() => setShowModal(false)} 
-          onSuccess={() => {
-            setShowModal(false);
-            setTimeout(refreshFeed, 1000);
+          onSuccess={(newIdea) => {
+            handleOptimisticPost(newIdea);
+            setTimeout(refreshFeed, 1500);
           }} 
         />
       )}

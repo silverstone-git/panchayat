@@ -80,8 +80,6 @@ class UserService:
             logger.info(f"Adjusted reputation for user {user_id} by {amount}. New reputation: {user.reputation}")
         return user
 
-user_service = UserService()
-
     async def increment_authored_count(self, db: AsyncSession, user_id: int):
         result = await db.execute(select(User).where(User.id == user_id))
         user = result.scalars().first()
@@ -99,3 +97,5 @@ user_service = UserService()
             db.add(user)
             await db.commit()
         return user
+
+user_service = UserService()

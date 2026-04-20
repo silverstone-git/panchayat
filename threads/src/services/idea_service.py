@@ -27,6 +27,7 @@ class IdeaService:
             description=idea_in.description,
             category=idea_in.category,
             author_id=author_id,
+            images=idea_in.images.model_dump() if idea_in.images else None,
             status=status
         )
         db.add(new_idea)

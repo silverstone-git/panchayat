@@ -33,6 +33,14 @@ spring:
           uri: ${EXPERT_REVIEW_SERVICE_URI:http://expert-review-service:8000}
           predicates:
             - Path=/api/v1/reviews/**
+        - id: user-storage-route
+          uri: ${USER_SERVICE_URI:http://user-service:8000}
+          predicates:
+            - Path=/api/v1/storage/**
+        - id: crowdfund-route
+          uri: ${CROWDFUND_SERVICE_URI:http://crowdfund-service:8000}
+          predicates:
+            - Path=/api/v1/crowdfund/**
         - id: user-service-health
           uri: ${USER_SERVICE_URI:http://user-service:8000}
           predicates:

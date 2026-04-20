@@ -93,6 +93,7 @@ export function useFeed(token: string | null, isLoggedIn: boolean) {
   }, [searchQuery, isLoggedIn]); // Omitting fetchFeedData to prevent infinite loops, managed via manual calls mostly
 
   return {
+    setFeed,
     feed, userVotes, hasMore, loading,
     searchQuery, setSearchQuery,
     activeCategory, handleCategoryChange,

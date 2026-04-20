@@ -3,10 +3,15 @@ from uuid import UUID
 from datetime import datetime
 from typing import Optional, List
 
+class ImageAttachment(BaseModel):
+    url: str
+    caption: Optional[str] = None
+
 class IdeaCreate(BaseModel):
     title: str = Field(..., min_length=5, max_length=255)
     description: str = Field(..., min_length=10)
     category: str = Field(...)
+    images: Optional[List[ImageAttachment]] = None
 
 class IdeaResponse(BaseModel):
     id: UUID
@@ -19,6 +24,7 @@ class IdeaResponse(BaseModel):
     downvote_count: int
     status: str
     created_at: datetime
+    images: List[ImageAttachment] = []
 
     model_config = ConfigDict(from_attributes=True)
 

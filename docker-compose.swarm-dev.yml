@@ -14,6 +14,7 @@ services:
       - USER_SERVICE_URI=http://user-service:8000
       - THREADS_SERVICE_URI=http://threads:8000
       - VOTING_SERVICE_URI=http://voting:8000
+      - CROWDFUND_SERVICE_URI=http://crowdfund-service:8000
       - MODERATION_SERVICE_URI=http://moderation-service:8000
       - EXPERT_REVIEW_SERVICE_URI=http://expert-review-service:8000
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
@@ -125,11 +126,19 @@ services:
       - ./moderation-service:/app
       - /app/.venv
     environment:
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=moderation_db
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     depends_on:
       kafka:
         condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    deploy:
+      replicas: 1
     networks:
       - demovox-network
 
@@ -339,6 +348,7 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CREATE_TOPICS: "ideas-events:1:1,votes-events:1:1,xp-events:1:1,content.hidden:1:1,moderation.reports:1:1,dead-letter-queue:1:1,expert-events:1:1"
     ports:
       - "9092:9092"
     healthcheck:

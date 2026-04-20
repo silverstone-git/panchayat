@@ -1,7 +1,9 @@
 from typing import List, Optional
-from fastapi import APIRouter, Query
+from src.db.session import get_db, AsyncSession, AsyncSession
+from fastapi import APIRouter, Query, Depends, Depends
 from src.schemas.idea import FeedResponse
 from src.services.search_service import search_service
+from src.db.session import get_db, AsyncSession, AsyncSession
 from src.services.cache_service import cache_service
 
 router = APIRouter(prefix="/feed", tags=["Feed"])
@@ -10,7 +12,7 @@ router = APIRouter(prefix="/feed", tags=["Feed"])
 async def get_feed(
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
-    sort: str = Query("new", regex="^(trending|new)$"),
+    sort: str = Query("new", pattern="^(trending|new)$"),
     category: Optional[str] = None,
     q: Optional[str] = None,
     author_id: Optional[str] = None,

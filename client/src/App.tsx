@@ -15,6 +15,7 @@ import { ImpactResumePage } from './pages/ImpactResumePage';
 import { ExpertReviewPanelPage } from './pages/ExpertReviewPanelPage';
 import { SubpanchayatsDirectoryPage } from './pages/SubpanchayatsDirectoryPage';
 import { ModerationDashboardPage } from './pages/ModerationDashboardPage';
+import { ToasterContainer } from './components/common/ToasterContainer';
 
 export default function App() {
   const { theme, toggleTheme } = useTheme();
@@ -22,12 +23,13 @@ export default function App() {
   
   const [searchQuery, setSearchQuery] = useState('');
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn || !token) {
     return <AuthScreen onAuthSuccess={handleAuthSuccess} />;
   }
 
   return (
     <BrowserRouter>
+      <ToasterContainer />
       <div className="bg-surface text-on-surface min-h-screen font-body">
         <Header 
           theme={theme} 

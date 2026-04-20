@@ -5,26 +5,36 @@ export function useAuth() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   const [profile, setProfile] = useState<any>(null);
 
+  const handleLogout = useCallback(() => {
+    setToken(null);
+    localStorage.removeItem('token');
+    setIsLoggedIn(false);
+    setProfile(null);
+    window.location.reload();
+  }, []);
+
+  const fetchProfile = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('/api/v1/users/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setProfile(await res.json());
+      } else if (res.status === 401) {
+        // Automatically logout on expired/invalid token
+        handleLogout();
+      }
+    } catch (e) {
+      console.error("Failed to fetch profile", e);
+    }
+  }, [token, handleLogout]);
+
   const handleAuthSuccess = (newToken: string) => {
     setToken(newToken);
     localStorage.setItem('token', newToken);
     setIsLoggedIn(true);
   };
-
-  const handleLogout = () => {
-    setToken(null);
-    localStorage.removeItem('token');
-    setIsLoggedIn(false);
-    setProfile(null);
-  };
-
-  const fetchProfile = useCallback(async () => {
-    if (!token) return;
-    const res = await fetch('/api/v1/users/me', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (res.ok) setProfile(await res.json());
-  }, [token]);
 
   const updateAvatar = async (url: string) => {
     if (!token || !profile) return;
@@ -37,10 +47,10 @@ export function useAuth() {
   };
 
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && token) {
       fetchProfile();
     }
-  }, [isLoggedIn, fetchProfile]);
+  }, [isLoggedIn, token, fetchProfile]);
 
   return { token, isLoggedIn, profile, handleAuthSuccess, handleLogout, updateAvatar };
 }

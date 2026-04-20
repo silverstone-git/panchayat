@@ -8,6 +8,8 @@ from src.core.config import settings
 from src.services.kafka_service import kafka_service
 from src.core.tracing import setup_tracer
 from opentelemetry.instrumentation.fastapi import OpenTelemetryMiddleware
+from src.db.session import engine
+from src.db.models import Base
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,6 +17,9 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
     await kafka_service.start()
     setup_tracer()
     asyncio.create_task(kafka_service.start_consumer())

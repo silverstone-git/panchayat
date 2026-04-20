@@ -4,6 +4,8 @@ import asyncio
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 import redis.asyncio as redis
 from src.core.config import settings
+from src.db.session import async_session
+from src.db.models import Report, ReportStatus, TargetType
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,7 @@ class KafkaService:
             settings.KAFKA_REPORTS_TOPIC,
             bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
             group_id="moderation-report-group",
-            value_deserializer=lambda v: json.loads(v.decode('utf-8'))
+            value_deserializer=lambda v: v # Manual JSON load to catch errors
         )
         await self.consumer.start()
         try:
@@ -61,9 +63,22 @@ class KafkaService:
             target_type = data.get("target_type")
             target_id = data.get("target_id")
             reporter_id = data.get("reporter_id")
+            reason = data.get("reason", "No reason provided")
 
             if not all([target_type, target_id, reporter_id]):
                 return
+
+            # Persist to DB
+            async with async_session() as db:
+                new_report = Report(
+                    reporter_id=str(reporter_id),
+                    target_type=TargetType(target_type),
+                    target_id=str(target_id),
+                    reason=reason,
+                    status=ReportStatus.PENDING
+                )
+                db.add(new_report)
+                await db.commit()
 
             # 1. Track unique reporters to prevent Sybil-like reporting
             report_set_key = f"reports:{target_type}:{target_id}:reporters"

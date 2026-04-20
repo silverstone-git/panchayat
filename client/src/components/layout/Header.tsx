@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { Avatar } from '../common/Avatar';
@@ -15,7 +15,21 @@ interface HeaderProps {
 
 export function Header({ theme, toggleTheme, profile, handleLogout, searchQuery, setSearchQuery, handleCategoryChange }: HeaderProps) {
   const location = useLocation();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const isActive = (path: string) => location.pathname === path ? 'text-primary bg-primary/10 px-3 py-1.5 rounded-xl' : 'text-slate-500 hover:text-primary';
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl fixed top-0 z-40 w-full shadow-sm dark:shadow-none transition-all duration-300 ease-in-out">
@@ -46,10 +60,29 @@ export function Header({ theme, toggleTheme, profile, handleLogout, searchQuery,
           <ThemeToggle theme={theme} toggle={toggleTheme} />
           
           {profile && (
-            <div className="flex items-center gap-2 p-1 pr-3 bg-surface-container-low rounded-full cursor-pointer hover:bg-surface-container transition-colors" onClick={handleLogout}>
-              <Avatar size={32} url={profile.profile_data?.avatar_url} />
-              <span className="font-bold text-sm hidden sm:block text-primary">u/{profile.username}</span>
-              <span className="material-symbols-outlined text-slate-400 text-sm ml-1" title="Logout">logout</span>
+            <div className="relative" ref={dropdownRef}>
+              <div 
+                className="flex items-center gap-2 p-1 pr-3 bg-surface-container-low rounded-full cursor-pointer hover:bg-surface-container transition-colors" 
+                onClick={() => setShowDropdown(!showDropdown)}
+              >
+                <Avatar size={32} url={profile.profile_data?.avatar_url} />
+                <span className="font-bold text-sm hidden sm:block text-primary">u/{profile.username}</span>
+                <span className="material-symbols-outlined text-slate-400 text-sm ml-1">expand_more</span>
+              </div>
+              
+              {showDropdown && (
+                <div className="absolute right-0 mt-3 w-64 bg-surface-container-lowest rounded-2xl shadow-xl border border-surface-container p-4 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-center gap-3 mb-4">
+                        <Avatar size={48} url={profile.profile_data?.avatar_url} />
+                        <div>
+                            <div className="font-bold text-primary">{profile.full_name || profile.username}</div>
+                            <div className="text-xs text-secondary font-bold uppercase tracking-wider">Level {profile.level} • {profile.xp} XP</div>
+                        </div>
+                    </div>
+                    <Link to="/impact" onClick={() => setShowDropdown(false)} className="block w-full text-left px-4 py-2 text-sm font-bold text-on-surface hover:bg-surface-container rounded-lg">View Impact Resume</Link>
+                    <button onClick={() => { handleLogout(); setShowDropdown(false); }} className="block w-full text-left px-4 py-2 text-sm font-bold text-error hover:bg-error-container/20 rounded-lg mt-1">Logout</button>
+                </div>
+              )}
             </div>
           )}
         </div>
