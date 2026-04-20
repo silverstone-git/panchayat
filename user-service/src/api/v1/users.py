@@ -174,3 +174,14 @@ async def review_expert_application(
     await db.commit()
     await db.refresh(app)
     return app
+
+@router.get("/stats/categories")
+async def get_user_category_stats(db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import func, select
+    from src.db.models import UserCategoryRole
+    
+    query = select(UserCategoryRole.category, func.count(UserCategoryRole.user_id)).group_by(UserCategoryRole.category)
+    result = await db.execute(query)
+    stats = result.all()
+    
+    return {category: count for category, count in stats}

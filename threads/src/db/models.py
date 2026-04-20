@@ -17,7 +17,9 @@ class Idea(Base):
     category: Mapped[str] = mapped_column(String(100), nullable=False)
     author_id: Mapped[str] = mapped_column(String(255), nullable=False)
     vote_count: Mapped[int] = mapped_column(Integer, default=0)
-    status: Mapped[str] = mapped_column(String(20), default="APPROVED") # Default to APPROVED for now to avoid breaking current UI, will change to PENDING later
+    upvote_count: Mapped[int] = mapped_column(Integer, default=0)
+    downvote_count: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(20), default="APPROVED")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     comments: Mapped[List["Comment"]] = relationship(back_populates="idea", cascade="all, delete-orphan")
@@ -31,6 +33,8 @@ class Comment(Base):
     path: Mapped[str] = mapped_column(Text, index=True, nullable=False)
     depth: Mapped[int] = mapped_column(Integer, default=0)
     vote_count: Mapped[int] = mapped_column(Integer, default=0)
+    upvote_count: Mapped[int] = mapped_column(Integer, default=0)
+    downvote_count: Mapped[int] = mapped_column(Integer, default=0)
     author_id: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="APPROVED")

@@ -42,10 +42,10 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomeFeedPage token={token} profile={profile} updateAvatar={updateAvatar} searchQuery={searchQuery} />} />
           <Route path="/idea/:id" element={<IdeaDiscussionPage token={token} />} />
-          <Route path="/groups" element={<SubpanchayatsDirectoryPage />} />
-          <Route path="/funds" element={<CrowdfundingGroupsPage />} />
+          <Route path="/groups" element={<SubpanchayatsDirectoryPage token={token} />} />
+          <Route path="/funds" element={<CrowdfundingGroupsPage token={token} />} />
           <Route path="/impact" element={<ImpactResumePage profile={profile} token={token} />} />
-          <Route path="/expert-review" element={<ExpertReviewPanelPage />} />
+          <Route path="/expert-review" element={<ExpertReviewPanelPage token={token} />} />
           <Route path="/moderation" element={<ModerationDashboardPage token={token} profile={profile} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

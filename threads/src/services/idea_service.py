@@ -76,11 +76,15 @@ class IdeaService:
 
         return new_idea
 
-    async def update_vote_count(self, db: AsyncSession, idea_id: str, new_count: int):
+    async def update_vote_count(self, db: AsyncSession, idea_id: str, new_count: float, ups: int = 0, downs: int = 0):
         stmt = (
             update(Idea)
             .where(Idea.id == idea_id)
-            .values(vote_count=new_count)
+            .values(
+                vote_count=int(new_count),
+                upvote_count=ups,
+                downvote_count=downs
+            )
             .returning(Idea)
         )
         result = await db.execute(stmt)
@@ -97,6 +101,8 @@ class IdeaService:
                     "category": idea.category,
                     "author_id": idea.author_id,
                     "vote_count": idea.vote_count,
+                    "upvote_count": idea.upvote_count,
+                    "downvote_count": idea.downvote_count,
                     "status": idea.status,
                     "created_at": idea.created_at.isoformat()
                 }
@@ -105,7 +111,34 @@ class IdeaService:
             # Invalidate Cache
             await cache_service.clear_feed_cache()
 
-            # Check for Popularity
+            # Check for Popularity / Review Status
+            if idea.vote_count >= 5 and idea.status == "APPROVED":
+                # For this prototype, 5 votes trigger Expert Review
+                stmt_status = (
+                    update(Idea)
+                    .where(Idea.id == idea_id)
+                    .values(status="EXPERT_REVIEW")
+                    .returning(Idea)
+                )
+                res_status = await db.execute(stmt_status)
+                idea = res_status.scalar_one()
+                
+                # Update ES with new status
+                await search_service.index_idea(
+                    str(idea.id),
+                    {
+                        "title": idea.title,
+                        "description": idea.description,
+                        "category": idea.category,
+                        "author_id": idea.author_id,
+                        "vote_count": idea.vote_count,
+                        "upvote_count": idea.upvote_count,
+                        "downvote_count": idea.downvote_count,
+                        "status": idea.status,
+                        "created_at": idea.created_at.isoformat()
+                    }
+                )
+
             if idea.vote_count >= settings.POPULAR_VOTE_THRESHOLD:
                 await kafka_service.send_event(
                     settings.KAFKA_IDEAS_TOPIC,

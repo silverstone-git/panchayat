@@ -13,11 +13,12 @@ async def get_feed(
     sort: str = Query("new", regex="^(trending|new)$"),
     category: Optional[str] = None,
     q: Optional[str] = None,
-    author_id: Optional[str] = None
+    author_id: Optional[str] = None,
+    status: Optional[str] = None
 ):
-    # Try cache first (skip for specific author search)
-    cache_key = f"feed:{page}:{size}:{sort}:{category}:{q}:{author_id}"
-    if not author_id:
+    # Try cache first (skip for specific author or status search)
+    cache_key = f"feed:{page}:{size}:{sort}:{category}:{q}:{author_id}:{status}"
+    if not author_id and not status:
         cached_data = await cache_service.get_cache(cache_key)
         if cached_data:
             if isinstance(cached_data, dict) and "items" in cached_data:
@@ -28,6 +29,7 @@ async def get_feed(
         query_text=q,
         category=category,
         author_id=author_id,
+        status=status,
         sort=sort,
         page=page,
         size=size
@@ -52,3 +54,14 @@ async def get_feed(
 
     return response_data
 
+
+@router.get("/stats")
+async def get_category_stats(db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import func, select
+    from src.db.models import Idea
+    
+    query = select(Idea.category, func.count(Idea.id)).group_by(Idea.category)
+    result = await db.execute(query)
+    stats = result.all()
+    
+    return {category: count for category, count in stats}

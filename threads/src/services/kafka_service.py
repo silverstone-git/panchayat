@@ -33,7 +33,7 @@ class KafkaService:
         await self.producer.send_and_wait(topic, payload)
 
     async def start_consumer(self, callback):
-        topics = [settings.KAFKA_VOTES_TOPIC, settings.KAFKA_CONTENT_HIDDEN_TOPIC]
+        topics = [settings.KAFKA_VOTES_TOPIC, settings.KAFKA_CONTENT_HIDDEN_TOPIC, settings.KAFKA_EXPERT_EVENTS_TOPIC]
         logger.info(f"Subscribing to topics: {topics}")
         self.consumer = AIOKafkaConsumer(
             *topics,

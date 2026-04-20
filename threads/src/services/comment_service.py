@@ -134,12 +134,16 @@ class CommentService:
             "has_more": (page * size) < total
         }
 
-    async def update_vote_count(self, db: AsyncSession, comment_id: UUID, new_count: int):
+    async def update_vote_count(self, db: AsyncSession, comment_id: UUID, new_count: float, ups: int = 0, downs: int = 0):
         from sqlalchemy import update
         stmt = (
             update(Comment)
             .where(Comment.id == comment_id)
-            .values(vote_count=new_count)
+            .values(
+                vote_count=int(new_count),
+                upvote_count=ups,
+                downvote_count=downs
+            )
         )
         await db.execute(stmt)
         await db.commit()

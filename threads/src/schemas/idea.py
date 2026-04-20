@@ -15,6 +15,8 @@ class IdeaResponse(BaseModel):
     category: str
     author_id: str
     vote_count: int
+    upvote_count: int
+    downvote_count: int
     status: str
     created_at: datetime
 

@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     KAFKA_VOTES_TOPIC: str = "votes-events"
     KAFKA_XP_TOPIC: str = "xp-events"
     KAFKA_CONTENT_HIDDEN_TOPIC: str = "content.hidden"
+    KAFKA_EXPERT_EVENTS_TOPIC: str = "expert-events"
     KAFKA_DLQ_TOPIC: str = "dead-letter-queue"
     POPULAR_VOTE_THRESHOLD: int = 500
 

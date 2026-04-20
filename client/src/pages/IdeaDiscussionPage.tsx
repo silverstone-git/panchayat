@@ -42,8 +42,9 @@ export function IdeaDiscussionPage({ token }: { token: string | null }) {
     fetchIdea();
   }, [id, token]);
 
-  if (loading) return <div className="pt-32 text-center text-primary font-bold">Loading discussion...</div>;
-  if (!idea) return <div className="pt-32 text-center text-error font-bold">Idea not found.</div>;
+  const totalVotes = (idea.upvote_count || 0) + (idea.downvote_count || 0);
+  const agreePercent = totalVotes > 0 ? Math.round(((idea.upvote_count || 0) / totalVotes) * 100) : 0;
+  const debatingPercent = 100 - agreePercent;
 
   return (
     <main className="pt-24 pb-32 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -86,14 +87,14 @@ export function IdeaDiscussionPage({ token }: { token: string | null }) {
               </h4>
               <div className="space-y-2">
                 <div className="h-4 w-full bg-surface-container-highest rounded-full overflow-hidden">
-                  <div className="bg-gradient-to-r from-primary to-tertiary-container h-full" style={{ width: '78%' }}></div>
+                  <div className="bg-gradient-to-r from-primary to-tertiary-container h-full transition-all duration-1000" style={{ width: `${agreePercent}%` }}></div>
                 </div>
                 <div className="flex justify-between font-label text-[11px] font-bold text-secondary">
-                  <span>78% AGREE</span>
-                  <span>22% DEBATING</span>
+                  <span>{agreePercent}% AGREE</span>
+                  <span>{debatingPercent}% DEBATING</span>
                 </div>
               </div>
-              <p className="text-sm font-label italic opacity-80">Based on architectural reviews and citizen votes.</p>
+              <p className="text-sm font-label italic opacity-80">Based on architectural reviews and {totalVotes} citizen votes.</p>
             </div>
           </div>
         </article>
@@ -152,9 +153,26 @@ export function IdeaDiscussionPage({ token }: { token: string | null }) {
             </ul>
           </div>
           <div className="pt-6 border-t border-surface-container">
-             <button className="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary py-3 rounded-full font-bold shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
+             <button 
+                onClick={() => navigate('/funds')}
+                className="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary py-3 rounded-full font-bold shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2"
+             >
                  <span className="material-symbols-outlined text-sm">volunteer_activism</span>
                  Fund this Initiative
+             </button>
+             <button 
+                onClick={() => {
+                    if (navigator.share) {
+                        navigator.share({ title: idea.title, url: window.location.href }).catch(console.error);
+                    } else {
+                        navigator.clipboard.writeText(window.location.href);
+                        alert('Link copied!');
+                    }
+                }}
+                className="w-full mt-3 bg-surface-container-high text-primary py-3 rounded-full font-bold shadow-sm hover:bg-surface-container-highest transition-all flex items-center justify-center gap-2"
+             >
+                 <span className="material-symbols-outlined text-sm">share</span>
+                 Share Proposal
              </button>
           </div>
         </div>

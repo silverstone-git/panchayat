@@ -14,11 +14,20 @@ export function RightSidebar({ profile, updateAvatar, token }: RightSidebarProps
   const [campaigns, setCampaigns] = useState<any[]>([]);
 
   useEffect(() => {
-     // Stub for crowdfund-service featured campaigns
-     // In real world: fetch('/api/v1/crowdfund/campaigns/featured')
-     setCampaigns([
-        { id: 1, title: 'Local Park Renovation', goal: 100000, raised: 65000, desc: 'Sector 3 Community Park needs your help.' }
-     ]);
+     const fetchFeatured = async () => {
+        if (!token) return;
+        try {
+            const res = await fetch('/api/v1/crowdfund/campaigns/featured', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setCampaigns(await res.json());
+            }
+        } catch (e) {
+            console.error("Error fetching featured campaigns", e);
+        }
+     };
+     fetchFeatured();
   }, [token]);
 
   return (
@@ -32,7 +41,7 @@ export function RightSidebar({ profile, updateAvatar, token }: RightSidebarProps
               <div>
                 <div className="font-headline font-black text-lg text-primary">u/{profile.username}</div>
                 <div className="flex items-center gap-1.5 mt-1">
-                  <span className="bg-tertiary-fixed text-on-tertiary-fixed text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Level {profile.level}</span>
+                  <span className="bg-tertiary-fixed text-on-tertiary-container text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Level {profile.level}</span>
                   <span className="text-xs font-semibold text-secondary">{profile.xp} XP</span>
                 </div>
               </div>
@@ -74,19 +83,19 @@ export function RightSidebar({ profile, updateAvatar, token }: RightSidebarProps
             <div className="relative z-10">
               <h5 className="font-label text-[10px] font-bold text-primary-fixed-dim uppercase tracking-[0.2em] mb-2">Funded Projects</h5>
               <h4 className="font-headline font-bold text-xl mb-1">{c.title}</h4>
-              <p className="text-sm text-primary-fixed-dim mb-4 leading-tight">{c.desc}</p>
+              <p className="text-sm text-primary-fixed-dim mb-4 leading-tight">{c.description}</p>
               
               <div className="space-y-1 mb-4">
                 <div className="w-full bg-primary-fixed/20 rounded-full h-2">
-                  <div className="bg-tertiary-fixed-dim h-2 rounded-full transition-all duration-1000" style={{ width: `${(c.raised/c.goal)*100}%` }}></div>
+                  <div className="bg-tertiary-fixed-dim h-2 rounded-full transition-all duration-1000" style={{ width: `${(c.raisedAmount/c.goalAmount)*100}%` }}></div>
                 </div>
                 <div className="flex justify-between text-xs font-bold text-primary-fixed-dim">
-                  <span>₹{c.raised/1000}k raised</span>
-                  <span>Goal: ₹{c.goal/1000}k</span>
+                  <span>₹{c.raisedAmount/1000}k raised</span>
+                  <span>Goal: ₹{c.goalAmount/1000}k</span>
                 </div>
               </div>
               
-              <button className="w-full bg-tertiary-fixed text-on-tertiary-fixed py-2.5 rounded-full text-sm font-bold shadow-sm hover:opacity-90 transition-opacity">Contribute Now</button>
+              <button className="w-full bg-tertiary-fixed text-on-tertiary-container py-2.5 rounded-full text-sm font-bold shadow-sm hover:opacity-90 transition-opacity">Contribute Now</button>
             </div>
           </div>
       ))}

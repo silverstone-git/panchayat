@@ -53,7 +53,22 @@ export function IdeaCard({ item, userVotes, vote, expandedIdea, setExpandedIdea,
             {item.comment_count || 0} Discussion
           </div>
           {/* Stubbed Share Button */}
-          <button className="flex items-center gap-1.5 text-xs font-bold text-primary/60 hover:text-primary transition-colors" onClick={(e) => { e.stopPropagation(); alert('Share stub clicked'); }}>
+          <button 
+            className="flex items-center gap-1.5 text-xs font-bold text-primary/60 hover:text-primary transition-colors" 
+            onClick={(e) => { 
+                e.stopPropagation(); 
+                if (navigator.share) {
+                    navigator.share({
+                        title: item.title,
+                        text: item.description,
+                        url: `${window.location.origin}/idea/${item.id}`
+                    }).catch(console.error);
+                } else {
+                    navigator.clipboard.writeText(`${window.location.origin}/idea/${item.id}`);
+                    alert('Link copied to clipboard!');
+                }
+            }}
+          >
             <span className="material-symbols-outlined text-[18px]">share</span>
             Share
           </button>

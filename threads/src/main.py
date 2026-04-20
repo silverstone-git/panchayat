@@ -37,18 +37,20 @@ async def handle_kafka_event(payload):
         target_type = data.get("target_type", "idea")
         target_id = data.get("target_id") or data.get("idea_id")
         new_count = data.get("new_count")
+        ups = data.get("up_count", 0)
+        downs = data.get("down_count", 0)
 
         if target_id and new_count is not None:
             async with async_session() as db:
                 if target_type == "idea":
-                    logger.info(f"Updating idea {target_id} vote_count to {new_count}")
-                    await idea_service.update_vote_count(db, target_id, new_count)
+                    logger.info(f"Updating idea {target_id} vote_count to {new_count}, ups={ups}, downs={downs}")
+                    await idea_service.update_vote_count(db, target_id, new_count, ups, downs)
                     await cache_service.clear_cache_for_idea(target_id)
 
                 elif target_type == "comment":
-                    logger.info(f"Updating comment {target_id} vote_count to {new_count}")
+                    logger.info(f"Updating comment {target_id} vote_count to {new_count}, ups={ups}, downs={downs}")
                     from uuid import UUID
-                    await comment_service.update_vote_count(db, UUID(target_id), new_count)
+                    await comment_service.update_vote_count(db, UUID(target_id), new_count, ups, downs)
         else:
             logger.warning(f"Malformed VOTE_CAST data: {data}")
 
@@ -67,6 +69,40 @@ async def handle_kafka_event(payload):
                     await comment_service.hide_comment(db, UUID(target_id))
         else:
             logger.warning(f"Malformed CONTENT_HIDDEN data: {data}")
+
+    elif event_type == "REVIEW_COMPLETED":
+        idea_id = data.get("idea_id")
+        action = data.get("action")
+        
+        if idea_id and action:
+            async with async_session() as db:
+                new_status = "APPROVED_BY_EXPERT" if action == "ENDORSE" else "FLAGGED_BY_EXPERT"
+                logger.info(f"Expert review for idea {idea_id}: {action}. Updating status to {new_status}")
+                
+                # Update status in DB
+                from sqlalchemy import update
+                from src.db.models import Idea
+                stmt = update(Idea).where(Idea.id == idea_id).values(status=new_status).returning(Idea)
+                res = await db.execute(stmt)
+                idea = res.scalar_one_or_none()
+                await db.commit()
+                
+                if idea:
+                    # Update ES
+                    await search_service.index_idea(str(idea.id), {
+                        "title": idea.title,
+                        "description": idea.description,
+                        "category": idea.category,
+                        "author_id": idea.author_id,
+                        "vote_count": idea.vote_count,
+                        "upvote_count": idea.upvote_count,
+                        "downvote_count": idea.downvote_count,
+                        "status": idea.status,
+                        "created_at": idea.created_at.isoformat()
+                    })
+                    await cache_service.clear_cache_for_idea(idea_id)
+        else:
+            logger.warning(f"Malformed REVIEW_COMPLETED data: {data}")
 
     else:
         logger.debug(f"Ignoring event type: {event_type}")

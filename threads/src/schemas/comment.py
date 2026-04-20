@@ -14,6 +14,8 @@ class CommentResponse(BaseModel):
     path: str
     depth: int
     vote_count: int
+    upvote_count: int
+    downvote_count: int
     author_id: str
     content: str
     status: str

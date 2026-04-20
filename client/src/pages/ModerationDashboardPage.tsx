@@ -27,7 +27,7 @@ export function ModerationDashboardPage({ token, profile }: { token: string | nu
     fetchApplications();
   }, [token]);
 
-  const handleReview = async (appId: int, action: 'APPROVE' | 'REJECT') => {
+  const handleReview = async (appId: number, action: 'APPROVE' | 'REJECT') => {
     if (!token) return;
     const notes = prompt(`Enter ${action.toLowerCase()} notes (optional):`);
     try {
