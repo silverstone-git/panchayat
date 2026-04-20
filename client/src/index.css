@@ -3,7 +3,45 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --primary: #002b6b;
+    --on-primary: #ffffff;
+    --surface: #f8f9fb;
+    --on-surface: #191c1e;
+    --surface-container-lowest: #ffffff;
+    --surface-container-low: #f2f4f6;
+    --surface-container: #eceef0;
+    --surface-container-high: #e6e8ea;
+    --surface-container-highest: #e0e3e5;
+    --on-surface-variant: #434651;
+    --outline-variant: #c4c6d2;
+    --secondary-container: #cbe7f5;
+    --on-secondary-container: #4e6874;
+    --tertiary-container: #7e2900;
+    --on-tertiary-container: #ff9972;
+    --primary-container: #1a428a;
+  }
+
+  .dark {
+    --primary: #b0c6ff;
+    --on-primary: #002d6f;
+    --surface: #111318;
+    --on-surface: #e2e2e9;
+    --surface-container-lowest: #0b0e13;
+    --surface-container-low: #191c21;
+    --surface-container: #1d2025;
+    --surface-container-high: #282a2f;
+    --surface-container-highest: #33353a;
+    --on-surface-variant: #c4c6d2;
+    --outline-variant: #44474f;
+    --secondary-container: #334954;
+    --on-secondary-container: #cfebf8;
+    --tertiary-container: #ffdccf;
+    --on-tertiary-container: #390c00;
+    --primary-container: #b0c6ff;
+  }
+
   body {
-    @apply bg-surface text-on-surface font-body min-h-screen antialiased;
+    @apply bg-surface text-on-surface font-body min-h-screen antialiased transition-colors duration-300;
   }
 }
