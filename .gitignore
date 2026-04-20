@@ -1,6 +1,7 @@
 GEMINI.md
 TODO.md
 SUMMARY.md
+PLAN.md
 conductor/
 .env
 .env.local
@@ -23,6 +24,7 @@ node_modules/
 /client/dist
 /client/playwright-report/
 /client/test-results/
+/client/design/
 
 # Utility Scripts
 sanity_check.py

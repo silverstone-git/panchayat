@@ -47,13 +47,14 @@ class SearchService:
             refresh=True
         )
 
-    async def search_ideas(self, query_text: str = None, category: str = None, sort: str = "new", page: int = 1, size: int = 10):
+    async def search_ideas(self, query_text: str = None, category: str = None, author_id: str = None, sort: str = "new", page: int = 1, size: int = 10):
         query = {"bool": {"must": [], "filter": []}}
         
-        # Only show APPROVED or PENDING_MODERATION
-        query["bool"]["filter"].append({
-            "terms": {"status": ["APPROVED", "PENDING_MODERATION"]}
-        })
+        # Filter by status unless searching for own authored posts
+        if not author_id:
+            query["bool"]["filter"].append({
+                "terms": {"status": ["APPROVED", "PENDING_MODERATION"]}
+            })
 
         if query_text:
             query["bool"]["must"].append({
@@ -65,6 +66,9 @@ class SearchService:
         
         if category:
             query["bool"]["must"].append({"term": {"category": category}})
+
+        if author_id:
+            query["bool"]["must"].append({"term": {"author_id": author_id}})
 
         sort_criteria = []
         if sort == "trending":

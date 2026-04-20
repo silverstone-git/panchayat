@@ -81,3 +81,21 @@ class UserService:
         return user
 
 user_service = UserService()
+
+    async def increment_authored_count(self, db: AsyncSession, user_id: int):
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalars().first()
+        if user:
+            user.authored_count += 1
+            db.add(user)
+            await db.commit()
+        return user
+
+    async def increment_voted_count(self, db: AsyncSession, user_id: int):
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalars().first()
+        if user:
+            user.votes_cast_count += 1
+            db.add(user)
+            await db.commit()
+        return user

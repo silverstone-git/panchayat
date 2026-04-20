@@ -40,6 +40,15 @@ class Settings(BaseSettings):
 
     OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://jaeger:4317"
     JAEGER_AGENT_PORT: int = 6831
+
+    # Cloudflare R2
+    R2_ACCOUNT_ID: str | None = None
+    R2_S3_API_BASE_URL_PANCHAYAT: str | None = None
+    R2_ACCESS_KEY_ID_PANCHAYAT: str | None = None
+    R2_SECRET_ACCESS_KEY_PANCHAYAT: str | None = None
+    CLOUDFLARE_API_TOKEN_PANCHAYAT: str | None = None
+    R2_BUCKET_NAME: str = "panchayat-uploads"
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()

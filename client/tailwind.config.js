@@ -1,0 +1,73 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: "class",
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+      extend: {
+          "colors": {
+              "on-tertiary": "#ffffff",
+              "surface": "#f8f9fb",
+              "tertiary-container": "#7e2900",
+              "on-primary-container": "#91b1ff",
+              "secondary": "#48626e",
+              "background": "#f8f9fb",
+              "outline-variant": "#c4c6d2",
+              "inverse-on-surface": "#eff1f3",
+              "on-surface-variant": "#434651",
+              "primary": "#002b6b",
+              "on-primary": "#ffffff",
+              "on-error": "#ffffff",
+              "surface-dim": "#d8dadc",
+              "on-secondary-fixed": "#021f29",
+              "error": "#ba1a1a",
+              "tertiary-fixed-dim": "#ffb59a",
+              "surface-container-highest": "#e0e3e5",
+              "secondary-container": "#cbe7f5",
+              "surface-container": "#eceef0",
+              "on-tertiary-container": "#ff9972",
+              "inverse-surface": "#2d3133",
+              "surface-container-lowest": "#ffffff",
+              "on-background": "#191c1e",
+              "surface-container-low": "#f2f4f6",
+              "on-surface": "#191c1e",
+              "on-tertiary-fixed": "#380d00",
+              "on-tertiary-fixed-variant": "#802a00",
+              "inverse-primary": "#b0c6ff",
+              "on-secondary-container": "#4e6874",
+              "secondary-fixed": "#cbe7f5",
+              "tertiary-fixed": "#ffdbcf",
+              "on-primary-fixed": "#001944",
+              "surface-variant": "#e0e3e5",
+              "on-primary-fixed-variant": "#1c448c",
+              "secondary-fixed-dim": "#afcbd8",
+              "primary-container": "#1a428a",
+              "surface-container-high": "#e6e8ea",
+              "on-secondary": "#ffffff",
+              "outline": "#747782",
+              "surface-bright": "#f8f9fb",
+              "primary-fixed-dim": "#b0c6ff",
+              "on-secondary-fixed-variant": "#304a55",
+              "surface-tint": "#395ca5",
+              "tertiary": "#591a00",
+              "on-error-container": "#93000a",
+              "error-container": "#ffdad6",
+              "primary-fixed": "#d9e2ff"
+          },
+          "borderRadius": {
+              "DEFAULT": "0.125rem",
+              "lg": "0.25rem",
+              "xl": "0.5rem",
+              "full": "0.75rem"
+          },
+          "fontFamily": {
+              "headline": ["Public Sans", "sans-serif"],
+              "body": ["Manrope", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+          }
+      },
+  },
+  plugins: [],
+}

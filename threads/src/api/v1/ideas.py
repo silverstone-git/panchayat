@@ -30,3 +30,29 @@ async def get_idea(id: UUID, db: AsyncSession = Depends(get_db)):
     if not idea:
         raise HTTPException(status_code=404, detail="Idea not found")
     return idea
+
+@router.get("/trending/hero", response_model=IdeaResponse)
+async def get_trending_hero(db: AsyncSession = Depends(get_db)):
+    # Simple trending logic: highest vote count from the last 7 days
+    from datetime import datetime, timedelta
+    seven_days_ago = datetime.now() - timedelta(days=7)
+    
+    query = (
+        select(Idea)
+        .where(Idea.created_at >= seven_days_ago)
+        .order_by(Idea.vote_count.desc())
+        .limit(1)
+    )
+    
+    result = await db.execute(query)
+    idea = result.scalar_one_or_none()
+    
+    if not idea:
+        # Fallback to all-time top if nothing in last 7 days
+        query = select(Idea).order_by(Idea.vote_count.desc()).limit(1)
+        result = await db.execute(query)
+        idea = result.scalar_one_or_none()
+        
+    if not idea:
+        raise HTTPException(status_code=404, detail="No trending ideas found")
+    return idea
