@@ -1,12 +1,12 @@
-import React, { useState, FormEvent, useRef, useEffect } from 'react';
+import React, { useState, FormEvent, useRef } from 'react';
 import { CATEGORIES } from '../../constants';
 import { toaster } from '../../utils/toaster';
 
 interface UploadedImage {
   id: string;
-  url: string;
   file: File;
   caption: string;
+  url?: string;
 }
 
 interface CreatePostModalProps {
@@ -23,61 +23,45 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [showImageDropdown, setShowImageDropdown] = useState(false);
   const descRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || files.length === 0 || !token) return;
-    if (uploadedImages.length + files.length > 4) {
-      toaster.error("You can upload a maximum of 4 images.");
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      for (const file of Array.from(files)) {
-        if (file.size > 100 * 1024) { // 100KB
-          toaster.error(`File "${file.name}" is too large (max 100KB).`);
-          continue;
+    if (!files) return;
+    
+    const newImages = Array.from(files).filter(file => {
+        if (file.size > 100 * 1024) {
+            toaster.error(`File "${file.name}" exceeds 100KB.`);
+            return false;
         }
+        return true;
+    });
 
-        const urlRes = await fetch(`/api/v1/storage/upload-url?filename=${encodeURIComponent(file.name)}&content_type=${encodeURIComponent(file.type)}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!urlRes.ok) throw new Error("Failed to get upload URL");
-        
-        const { upload_url, public_url } = await urlRes.json();
-        
-        const uploadRes = await fetch(upload_url, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
-        if (!uploadRes.ok) throw new Error("Upload to R2 failed");
-
-        setUploadedImages(prev => [...prev, { id: public_url, url: public_url, file, caption: '' }]);
-      }
-    } catch (err) {
-      toaster.error("Image upload failed.");
-    } finally {
-      setIsUploading(false);
+    if (uploadedImages.length + newImages.length > 4) {
+        toaster.error("Maximum 4 images allowed.");
+        return;
     }
+
+    setUploadedImages(prev => [...prev, ...newImages.map(file => ({ 
+        id: crypto.randomUUID(), 
+        file, 
+        caption: '' 
+    }))]);
   };
   
   const handleDescChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewDesc(e.target.value);
-    if (e.target.value.endsWith('!')) {
-      setShowImageDropdown(true);
-    } else {
-      setShowImageDropdown(false);
-    }
+    setShowImageDropdown(e.target.value.endsWith('!'));
   };
 
   const insertImageMarkdown = (image: UploadedImage) => {
     if (descRef.current) {
         const { selectionStart, value } = descRef.current;
-        const markdown = `![${image.caption || image.file.name}](${image.url} "${image.caption || ''}")`;
-        const newValue = value.slice(0, selectionStart -1) + markdown + value.slice(selectionStart);
+        const markdown = `![${image.caption || image.file.name}](${image.id} "${image.caption || ''}")`;
+        const newValue = value.slice(0, selectionStart - 1) + markdown + value.slice(selectionStart);
         setNewDesc(newValue);
         setShowImageDropdown(false);
         descRef.current.focus();
@@ -89,45 +73,50 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
     if (!token || isSubmitting) return;
     setIsSubmitting(true);
 
-    const newIdeaData = {
-      id: `optimistic-${Date.now()}`,
-      title: newTitle,
-      description: newDesc,
-      category: localCategory,
-      author_id: 'You',
-      vote_count: 1,
-      upvote_count: 1,
-      downvote_count: 0,
-      status: 'APPROVED',
-      created_at: new Date().toISOString(),
-      isOptimistic: true
-    };
-    onSuccess(newIdeaData);
-    onClose();
-
     try {
+      const uploadedData = [];
+      for (const img of uploadedImages) {
+        const urlRes = await fetch(`/api/v1/storage/upload-url?filename=${encodeURIComponent(img.file.name)}&content_type=${encodeURIComponent(img.file.type)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!urlRes.ok) throw new Error("Failed to get upload URL");
+        const { upload_url, public_url } = await urlRes.json();
+        
+        await fetch(upload_url, { method: 'PUT', headers: { 'Content-Type': img.file.type }, body: img.file });
+        uploadedData.push({ url: public_url, caption: img.caption });
+      }
+
+      const finalDesc = uploadedImages.reduce((acc, img) => 
+        acc.replace(new RegExp(img.id, 'g'), img.url || ''), newDesc);
+
+      const newIdeaData = {
+        id: `optimistic-${Date.now()}`,
+        title: newTitle,
+        description: finalDesc,
+        category: localCategory,
+        author_id: 'You',
+        vote_count: 1,
+        upvote_count: 1,
+        downvote_count: 0,
+        status: 'APPROVED',
+        created_at: new Date().toISOString(),
+        isOptimistic: true
+      };
+      
+      onSuccess(newIdeaData);
+      onClose();
+
       const res = await fetch('/api/v1/threads/ideas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ 
-            title: newTitle, 
-            description: newDesc, 
-            category: localCategory,
-            // Backend will need to be updated to accept image data
-            images: uploadedImages.map(img => ({ url: img.url, caption: img.caption }))
-        })
+        body: JSON.stringify({ title: newTitle, description: finalDesc, category: localCategory, images: uploadedData })
       });
       
-      if (!res.ok) {
-        throw new Error('Server responded with an error');
-      }
-      
+      if (!res.ok) throw new Error('Server error');
       toaster.success("Idea posted successfully!");
-      // The parent component will handle refreshing the feed to replace the optimistic post
 
     } catch (err) {
       toaster.error("Failed to post idea. Please try again.");
-      // Here you might want to add logic to remove the optimistic post
     } finally {
       setIsSubmitting(false);
     }
@@ -144,16 +133,9 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
         </div>
         
         <form onSubmit={postIdea} className="p-8 space-y-6 max-h-[80vh] overflow-y-auto">
-          {/* Form fields... */}
           <div>
             <label className="block font-label text-xs font-bold text-outline-variant uppercase tracking-[0.1em] mb-2">Policy Title</label>
-            <input 
-              className="w-full bg-surface border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 font-headline font-bold text-lg" 
-              placeholder="e.g., Decentralized Solar Grid for Old Town" 
-              value={newTitle} 
-              onChange={e => setNewTitle(e.target.value)} 
-              required 
-            />
+            <input className="w-full bg-surface border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 font-headline font-bold text-lg" placeholder="e.g., Decentralized Solar Grid for Old Town" value={newTitle} onChange={e => setNewTitle(e.target.value)} required />
           </div>
 
           <div className="relative">
@@ -167,9 +149,9 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
               required 
             />
             {showImageDropdown && uploadedImages.length > 0 && (
-                <div className="absolute z-10 bg-surface-container-high rounded-lg shadow-xl border border-outline-variant mt-1 w-64">
+                <div className="absolute z-10 bg-surface-container-high rounded-lg shadow-xl border border-outline-variant mt-1 w-64 max-h-40 overflow-y-auto">
                     {uploadedImages.map(img => (
-                        <div key={img.id} onClick={() => insertImageMarkdown(img)} className="p-2 hover:bg-surface-container-highest cursor-pointer text-sm font-bold text-primary">
+                        <div key={img.id} onClick={() => insertImageMarkdown(img)} className="p-2 hover:bg-surface-container-highest cursor-pointer text-sm font-bold text-primary border-b border-surface-container">
                             {img.file.name}
                         </div>
                     ))}
@@ -180,28 +162,16 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
           <div>
             <label className="block font-label text-xs font-bold text-outline-variant uppercase tracking-[0.1em] mb-2">Attach Images</label>
             <div className="border-2 border-dashed border-outline-variant rounded-xl p-4 text-center">
-                 <input 
-                    type="file" 
-                    className="hidden" 
-                    ref={fileInputRef} 
-                    onChange={handleFileUpload}
-                    accept="image/png,image/jpeg"
-                    multiple
-                 />
-                 <button 
-                    type="button" 
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading || uploadedImages.length >= 4}
-                    className="bg-surface-container-high text-primary px-4 py-2 rounded-full font-bold text-sm shadow-sm hover:bg-surface-container-highest transition-colors disabled:opacity-50"
-                 >
-                     {isUploading ? "Uploading..." : "Select Files (max 4, 100KB each)"}
+                 <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileSelect} accept="image/png,image/jpeg" multiple />
+                 <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadedImages.length >= 4} className="bg-surface-container-high text-primary px-4 py-2 rounded-full font-bold text-sm shadow-sm hover:bg-surface-container-highest transition-colors disabled:opacity-50">
+                     Select Files (max 4, 100KB each)
                  </button>
             </div>
             
             {uploadedImages.length > 0 && (
                 <div className="mt-4 grid grid-cols-2 gap-4">
-                    {uploadedImages.map((img, idx) => (
-                        <div key={idx} className="flex items-start gap-2 bg-surface-container-low p-2 rounded-lg">
+                    {uploadedImages.map((img) => (
+                        <div key={img.id} className="flex items-start gap-2 bg-surface-container-low p-2 rounded-lg">
                             <img src={URL.createObjectURL(img.file)} className="w-16 h-16 rounded-md object-cover" />
                             <input 
                                 className="flex-1 bg-surface border border-outline-variant rounded-md px-2 py-1 text-xs" 
@@ -209,6 +179,7 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
                                 value={img.caption}
                                 onChange={(e) => setUploadedImages(prev => prev.map(i => i.id === img.id ? {...i, caption: e.target.value} : i))}
                             />
+                            <button type="button" onClick={() => setUploadedImages(prev => prev.filter(i => i.id !== img.id))} className="text-error text-xs font-bold">Delete</button>
                         </div>
                     ))}
                 </div>

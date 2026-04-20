@@ -25,8 +25,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private static final List<String> EXCLUDED_PATHS = List.of(
         "/api/v1/auth",
         "/health",
-        "/api/v1/threads/feed",
-        "/api/v1/users"
+        "/api/v1/threads/feed"
     );
 
     public JwtAuthenticationFilter(JwtService jwtService) {

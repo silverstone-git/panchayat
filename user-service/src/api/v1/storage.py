@@ -31,7 +31,7 @@ async def get_presigned_url(
         
         # Generate a unique key to prevent overwrites
         extension = filename.split('.')[-1] if '.' in filename else ''
-        file_key = f"expert-docs/{current_user['id']}_{uuid.uuid4().hex[:8]}.{extension}"
+        file_key = f"expert-docs/{current_user.id}_{uuid.uuid4().hex[:8]}.{extension}"
         
         presigned_url = s3.generate_presigned_url(
             ClientMethod='put_object',
