@@ -76,10 +76,20 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
     try {
       const uploadedData = [];
       for (const img of uploadedImages) {
-        const urlRes = await fetch(`/api/v1/storage/upload-url?filename=${encodeURIComponent(img.file.name)}&content_type=${encodeURIComponent(img.file.type)}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+        // Request public upload URL for idea images
+        const urlRes = await fetch('/api/v1/threads/images/upload-request', {
+          method: 'POST',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            filename: img.file.name, 
+            content_type: img.file.type, 
+            file_hash: 'temp-hash' // TODO: Implement real hash
+          })
         });
-        if (!urlRes.ok) throw new Error("Failed to get upload URL");
+        if (!urlRes.ok) throw new Error("Failed to get public upload URL");
         const { upload_url, public_url } = await urlRes.json();
         
         await fetch(upload_url, { method: 'PUT', headers: { 'Content-Type': img.file.type }, body: img.file });
@@ -162,12 +172,11 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
           <div>
             <label className="block font-label text-xs font-bold text-on-surface-variant uppercase tracking-[0.1em] mb-2">Attach Images</label>
             <div className="border-2 border-dashed border-outline-variant rounded-xl p-4 text-center">
-                 <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileSelect} accept="image/png,image/jpeg" multiple />
+                 <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileSelect} accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" multiple />
                  <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadedImages.length >= 4} className="bg-surface-container-high text-primary px-4 py-2 rounded-full font-bold text-sm shadow-sm hover:bg-surface-container-highest transition-colors disabled:opacity-50">
-                     Select Files (max 4, 100KB each)
+                     Select Files (PNG, JPG, WEBP, GIF, SVG; max 4, 100KB each)
                  </button>
             </div>
-            
             {uploadedImages.length > 0 && (
                 <div className="mt-4 grid grid-cols-2 gap-4">
                     {uploadedImages.map((img) => (

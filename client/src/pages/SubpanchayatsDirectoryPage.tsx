@@ -95,12 +95,13 @@ export function SubpanchayatsDirectoryPage({ token }: { token: string | null }) 
                             <span className="text-2xl font-black text-tertiary">{proposalCount}</span>
                             <span className="text-[10px] uppercase font-label tracking-tighter text-outline">Live Proposals</span>
                         </div>
-                        <button 
-                          className="ml-auto bg-primary text-on-primary px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform flex items-center gap-2"
+                        <button
+                          className="ml-auto bg-primary text-on-primary px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform flex items-center gap-2 whitespace-nowrap shrink-0"
                           onClick={() => navigate(`/?category=${cat.id}`)}
                         >
                             Enter Circle <span className="material-symbols-outlined text-sm">arrow_forward</span>
                         </button>
+
                     </div>
                 </div>
              );

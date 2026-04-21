@@ -28,6 +28,41 @@ from src.db.session import async_session, engine
 from src.db.models import Base
 
 
+async def reindex_all_ideas():
+    logger.info("Starting scheduled reindexing task...")
+    try:
+        async with async_session() as db:
+            from sqlalchemy import select
+            from src.db.models import Idea
+            stmt = select(Idea)
+            result = await db.execute(stmt)
+            ideas = result.scalars().all()
+            for idea in ideas:
+                await search_service.index_idea(
+                    str(idea.id),
+                    {
+                        "title": idea.title,
+                        "description": idea.description,
+                        "category": idea.category,
+                        "author_id": idea.author_id,
+                        "author_name": idea.author_name,
+                        "vote_count": idea.vote_count,
+                        "upvote_count": idea.upvote_count,
+                        "downvote_count": idea.downvote_count,
+                        "status": idea.status,
+                        "created_at": idea.created_at.isoformat(),
+                        "images": idea.images
+                    }
+                )
+        logger.info(f"Reindexing complete. Synced {len(ideas)} ideas.")
+    except Exception as e:
+        logger.error(f"Error during scheduled reindexing: {e}")
+
+async def run_periodic_reindex():
+    while True:
+        await asyncio.sleep(1800) # 30 minutes
+        await reindex_all_ideas()
+
 async def handle_kafka_event(payload):
     logger.info(f"Received Kafka event: {payload}")
     event_type = payload.get("type") or payload.get("event_type")
@@ -127,14 +162,17 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
 
     consumer_task = asyncio.create_task(start_kafka_consumer())
+    reindex_task = asyncio.create_task(run_periodic_reindex())
     
     yield
     
     # Shutdown
     logger.info("Service shutting down...")
     consumer_task.cancel()
+    reindex_task.cancel()
     try:
         await consumer_task
+        await reindex_task
     except asyncio.CancelledError:
         pass
         

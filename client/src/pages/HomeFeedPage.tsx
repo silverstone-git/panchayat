@@ -60,7 +60,15 @@ export function HomeFeedPage({ token, profile, updateAvatar, searchQuery }: any)
             </div>
             <div className="md:col-span-5 relative aspect-square md:aspect-auto h-full min-h-[250px]">
               <div className="absolute inset-0 bg-primary-container rounded-[2rem] transform rotate-3 scale-95 opacity-20"></div>
-              <img className="w-full h-full object-cover rounded-[2rem] shadow-2xl relative z-10" alt="solar panels" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNaujvn5kdLy9EtTOzs3jSFGLmm2UY6GmHtVCCwKga1nBbneKKOxarFBoXv0w5O_0dqQT6yyjwPP5sOvjkuxlryCc88R-qVc2RK65JvF6AZzR6tVTQqxNDNpsB4O0O2oI69aP7sUyDgLcwqfUVIKUV50oeuYbLCzNmqqE4s6Elb6lPqpxzETJkwQ2kFj_QhHEXfbBZWGhUTEt7d30p3KfRz3SB1N9vknijjADE8QhsxFRUZaEXcHtmZmE3sjJXAniRq65FX3D0Zkw"/>
+              <img 
+                className="w-full h-full object-cover rounded-[2rem] shadow-2xl relative z-10" 
+                alt={trendingIdea.title} 
+                src={
+                  (trendingIdea.images && trendingIdea.images.length > 0) 
+                    ? trendingIdea.images[0].url 
+                    : `https://source.unsplash.com/random/800x600/?${trendingIdea.category || 'city'}`
+                } 
+              />
             </div>
           </section>
         )}

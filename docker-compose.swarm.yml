@@ -20,7 +20,7 @@ services:
     depends_on:
       - kafka
     deploy:
-      replicas: 2
+      replicas: 1
       restart_policy:
         condition: on-failure
       update_config:
@@ -224,7 +224,7 @@ services:
     depends_on:
       - gateway
     deploy:
-      replicas: 2
+      replicas: 1
     networks:
       - panchayat-network
 
@@ -338,6 +338,7 @@ services:
 networks:
   panchayat-network:
     driver: overlay
+    attachable: true
 
 volumes:
   postgres_data:

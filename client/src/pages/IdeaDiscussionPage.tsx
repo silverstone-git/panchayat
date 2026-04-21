@@ -83,6 +83,13 @@ export function IdeaDiscussionPage({ token }: { token: string | null }) {
               </div>
               <h3 className="font-headline text-2xl font-bold text-primary mb-4">Executive Summary</h3>
               <div className="prose prose-slate max-w-none text-lg leading-relaxed mb-6 font-body whitespace-pre-wrap text-on-surface-variant">
+                {idea.images && idea.images.length > 0 && !idea.description.includes('![') && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                        {idea.images.map((img: any, idx: number) => (
+                            <img key={idx} src={img.url} alt={img.caption || `Idea image ${idx + 1}`} className="rounded-xl w-full h-64 object-cover" />
+                        ))}
+                    </div>
+                )}
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {idea.description}
                 </ReactMarkdown>

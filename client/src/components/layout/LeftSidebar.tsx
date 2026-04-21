@@ -26,12 +26,14 @@ export function LeftSidebar({ activeCategory, handleCategoryChange, setShowModal
         <nav className="space-y-1">
           {CATEGORIES.map(cat => (
             <button 
-              key={cat.id} 
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-bold transition-all ${activeCategory === cat.id ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-low'}`}
-              onClick={() => handleCategoryChange(cat.id)}
+            key={cat.id} 
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-bold transition-all ${activeCategory === cat.id ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:bg-surface-container-low'}`}
+            onClick={() => handleCategoryChange(cat.id)}
             >
-              <span>{cat.icon}</span> {cat.name}
+            <span className="shrink-0">{cat.icon}</span> 
+            <span className="truncate">{cat.name}</span>
             </button>
+
           ))}
         </nav>
       </div>
