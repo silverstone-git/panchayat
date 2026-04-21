@@ -1,0 +1,36 @@
+{
+  "title": "Panchayat System Overview",
+  "panels": [
+    {
+      "title": "Total HTTP Request Rate",
+      "type": "graph",
+      "targets": [{ "expr": "rate(http_requests_total[5m])", "legendFormat": "{{job}}" }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "title": "Error Rate (5xx)",
+      "type": "graph",
+      "targets": [{ "expr": "rate(http_requests_total{status=~'5..'}[5m])", "legendFormat": "{{job}} - 5xx" }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "title": "Active Kafka Consumer Lag",
+      "type": "graph",
+      "targets": [{ "expr": "kafka_consumergroup_lag", "legendFormat": "{{group}}" }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+    },
+    {
+      "title": "PostgreSQL Active Connections",
+      "type": "gauge",
+      "targets": [{ "expr": "pg_stat_activity_count", "legendFormat": "Active Conns" }],
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 8 }
+    },
+    {
+      "title": "Redis Memory Usage",
+      "type": "gauge",
+      "targets": [{ "expr": "redis_memory_used_bytes", "legendFormat": "Bytes" }],
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 8 }
+    }
+  ],
+  "schemaVersion": 16
+}

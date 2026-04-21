@@ -288,10 +288,37 @@ services:
     networks:
       - demovox-network
 
+  redis-exporter:
+    image: oliver006/redis_exporter
+    ports:
+      - "9121:9121"
+    networks:
+      - demovox-network
+    environment:
+      - REDIS_ADDR=redis-cache:6379
+
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    ports:
+      - "9187:9187"
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/threads_db?sslmode=disable
+    networks:
+      - demovox-network
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter
+    ports:
+      - "9308:9308"
+    command: ["--kafka.server=kafka:29092"]
+    networks:
+      - demovox-network
+
   grafana:
     image: grafana/grafana:latest
     volumes:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
     ports:
       - "3000:3000"
     environment:
