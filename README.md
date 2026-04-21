@@ -6,8 +6,11 @@
 
 ## ✨ Features
 - **Modern Hybrid UI:** A "Reddit x Twitter" inspired interface with a 3-column layout, glassmorphism, and a persistent Light/Dark mode.
-- **Smart Idea Submission:** Structured proposal workflow with built-in ML-driven moderation and category-based routing.
-- **Real-Time Paginated Feeds:** High-performance feeds powered by Elasticsearch, supporting keyword search, category filtering, and sorting (Latest vs. Top Voted).
+- **Smart Idea Submission:** Structured proposal workflow with built-in ML-driven moderation, category-based routing, and markdown-enabled image support.
+- **R2 Storage & Deduplication:** Secure document and image hosting using separated Public (images) and Private (expert docs) buckets with automatic deduplication.
+- **Role-Based Civic Circles:** Dedicated 'Subpanchayats' communities for specialized expert discourse, searchable via an interactive directory.
+- **High-Accessibility Design:** Refined Material Design 3 interface with optimized contrast for both Light and Dark modes.
+- **Real-Time Paginated Feeds:** High-performance feeds powered by Elasticsearch, supporting keyword search, category filtering, and sorting.
 - **Expert Review Workflow:** Automated assignment of proposals to specialized experts for scoring and consensus validation.
 - **Automated Civic Action:** Consensus-backed ideas (Expert Score > 7.0) are automatically prepared for submission to government portals.
 - **Event-Driven Architecture:** Decoupled microservices communicating asynchronously via Apache Kafka for maximum resilience.
@@ -82,4 +85,3 @@ docker-compose -f docker-compose.dev.yml up --build
 **Next Up:**
 - **Phase 6 (Advanced Governance):** Action Group (Sub-Panchayat) extraction and crowdfunding integration.
 
-*For detailed architectural mandates, refer to `GEMINI.md`.*
