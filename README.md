@@ -56,20 +56,28 @@ Panchayat uses a polyglot microservice architecture designed for maximum concurr
 - Available Ports: `8080` (Gateway), `5173` (Client), `5432` (Postgres), `6379` (Redis), `9200` (Elasticsearch), `9092` (Kafka).
 
 ### 2. Environment Setup
-Create a `.env` file for the gateway (shared among services in dev mode):
+Create a `.env` file (shared among services in dev mode):
 ```bash
-cp .env.example gateway/.env
+cp .env.example .env
 ```
 *(Ensure `JWT_SECRET_KEY` is at least 32 characters long).*
 
 ### 3. Run the Ecosystem
 Spin up the entire platform:
 ```bash
-docker-compose -f docker-compose.dev.yml up --build
+docker-compose -f docker-compose.swarm.yml up --build
+```
+
+### 3.5. Dev Server
+```bash
+docker-compose -f docker-compose.swarm-dev.yml up --build
 ```
 
 ### 4. Access the Application
-- **Web UI:** [http://localhost:5173](http://localhost:5173)
+- **Web UI:** `http://localhost:5173`
+- **Grafana:** `http://localhost:3000`
+- **Prometheus:** `http://localhost:9090`
+- **Jaeger UI:** `http://localhost:16686`
 - **API Gateway:** `http://localhost:8080` (Proxied via Web UI)
 
 ---
