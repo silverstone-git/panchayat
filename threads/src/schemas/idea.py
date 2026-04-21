@@ -24,7 +24,7 @@ class IdeaResponse(BaseModel):
     downvote_count: int
     status: str
     created_at: datetime
-    images: List[ImageAttachment] = []
+    images: Optional[List[ImageAttachment]] = []
 
     model_config = ConfigDict(from_attributes=True)
 

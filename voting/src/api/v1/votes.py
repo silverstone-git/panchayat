@@ -15,7 +15,7 @@ async def cast_vote(
     if target_type not in ["idea", "comment"]:
         raise HTTPException(status_code=400, detail="Invalid target type")
 
-    new_total = await vote_service.cast_vote(
+    result = await vote_service.cast_vote(
         target_type=target_type,
         target_id=target_id,
         user_id=x_user_id,
@@ -24,7 +24,7 @@ async def cast_vote(
 
     return VoteResponse(
         target_id=target_id,
-        total_votes=new_total,
+        total_votes=result["total"],
         user_vote=vote_in.direction
     )
 
