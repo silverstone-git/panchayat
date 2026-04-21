@@ -5,6 +5,7 @@ PLAN.md
 conductor/
 .env
 .env.local
+test_images/
 
 # Python
 __pycache__/

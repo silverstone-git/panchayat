@@ -22,7 +22,7 @@ export function LeftSidebar({ activeCategory, handleCategoryChange, setShowModal
       </nav>
 
       <div>
-        <h5 className="font-label text-[10px] font-bold text-outline-variant uppercase tracking-[0.2em] mb-4 px-4">Subpanchayats</h5>
+        <h5 className="font-label text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] mb-4 px-4">Subpanchayats</h5>
         <nav className="space-y-1">
           {CATEGORIES.map(cat => (
             <button 

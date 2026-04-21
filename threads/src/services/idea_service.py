@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from fastapi import HTTPException
-from src.db.models import Idea
+from src.db.models import Idea, ImageRecord
 from src.schemas.idea import IdeaCreate
 from src.services.kafka_service import kafka_service
 from src.services.search_service import search_service
@@ -10,7 +10,7 @@ from src.services.moderation_client import moderation_client
 from src.core.config import settings
 
 class IdeaService:
-    async def create_idea(self, db: AsyncSession, idea_in: IdeaCreate, author_id: str):
+    async def create_idea(self, db: AsyncSession, idea_in: IdeaCreate, author_id: str, author_name: str = None):
         # Moderation check
         mod_result = await moderation_client.check_content([idea_in.title, idea_in.description])
         
@@ -27,10 +27,46 @@ class IdeaService:
             description=idea_in.description,
             category=idea_in.category,
             author_id=author_id,
-            images=idea_in.images.model_dump() if idea_in.images else None,
+            author_name=author_name,
+            images=[img.model_dump() for img in idea_in.images] if idea_in.images else None,
             status=status
         )
         db.add(new_idea)
+        await db.flush() # flush to get new_idea.id
+
+        # Register/Link images
+        if idea_in.images:
+            for img in idea_in.images:
+                if img.hash and img.key:
+                    # check if exists
+                    stmt = select(ImageRecord).where(ImageRecord.file_hash == img.hash).limit(1)
+                    res = await db.execute(stmt)
+                    existing_image = res.scalar_one_or_none()
+                    
+                    if not existing_image:
+                        # Add a new row
+                        new_img_record = ImageRecord(
+                            idea_id=new_idea.id,
+                            uploaded_user_id=author_id,
+                            file_key=img.key,
+                            public_url=img.url,
+                            file_hash=img.hash
+                        )
+                        db.add(new_img_record)
+                    else:
+                        # Hash exists, meaning R2 has it. 
+                        # We create a new DB record pointing to the same R2 key if the idea_id differs
+                        # Or if we want strict deduplication, we just link it. The user said:
+                        # "if the hash collides... just simply a new image row should be added in an images table instead of uploading to R2 yet again"
+                        new_img_record = ImageRecord(
+                            idea_id=new_idea.id,
+                            uploaded_user_id=author_id,
+                            file_key=existing_image.file_key,
+                            public_url=existing_image.public_url,
+                            file_hash=existing_image.file_hash
+                        )
+                        db.add(new_img_record)
+
         await db.commit()
         await db.refresh(new_idea)
 
@@ -42,9 +78,13 @@ class IdeaService:
                 "description": new_idea.description,
                 "category": new_idea.category,
                 "author_id": new_idea.author_id,
+                "author_name": new_idea.author_name,
                 "vote_count": new_idea.vote_count,
+                "upvote_count": new_idea.upvote_count,
+                "downvote_count": new_idea.downvote_count,
                 "status": new_idea.status,
-                "created_at": new_idea.created_at.isoformat()
+                "created_at": new_idea.created_at.isoformat(),
+                "images": new_idea.images
             }
         )
 
@@ -101,6 +141,7 @@ class IdeaService:
                     "description": idea.description,
                     "category": idea.category,
                     "author_id": idea.author_id,
+                    "author_name": idea.author_name,
                     "vote_count": idea.vote_count,
                     "upvote_count": idea.upvote_count,
                     "downvote_count": idea.downvote_count,
@@ -172,6 +213,7 @@ class IdeaService:
                     "description": idea.description,
                     "category": idea.category,
                     "author_id": idea.author_id,
+                    "author_name": idea.author_name,
                     "vote_count": idea.vote_count,
                     "status": idea.status,
                     "created_at": idea.created_at.isoformat()

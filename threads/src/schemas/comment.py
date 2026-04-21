@@ -17,6 +17,7 @@ class CommentResponse(BaseModel):
     upvote_count: int
     downvote_count: int
     author_id: str
+    author_name: Optional[str] = None
     content: str
     status: str
     created_at: datetime

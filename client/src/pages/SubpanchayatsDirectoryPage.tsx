@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CATEGORIES } from '../constants';
 
 export function SubpanchayatsDirectoryPage({ token }: { token: string | null }) {
+  const navigate = useNavigate();
   const [threadStats, setThreadStats] = useState<Record<string, number>>({});
   const [userStats, setUserStats] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [localSearch, setLocalSearch] = useState('');
+
+  const filteredCategories = CATEGORIES.filter(cat => 
+    cat.name.toLowerCase().includes(localSearch.toLowerCase())
+  );
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -42,9 +49,15 @@ export function SubpanchayatsDirectoryPage({ token }: { token: string | null }) 
           <div className="md:col-span-4">
             <div className="relative group">
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                <span className="material-symbols-outlined text-outline">search</span>
+                <span className="material-symbols-outlined text-outline group-focus-within:text-primary transition-colors">search</span>
               </div>
-              <input className="w-full bg-surface-container-lowest border-none rounded-xl py-4 pl-12 pr-4 shadow-sm focus:ring-2 focus:ring-secondary/20 transition-all font-body text-on-surface placeholder:text-outline-variant" placeholder="Search communities..." type="text"/>
+              <input 
+                className="w-full bg-surface-container-lowest border border-outline-variant focus:border-primary rounded-xl py-4 pl-12 pr-4 shadow-sm focus:ring-4 focus:ring-primary/10 transition-all font-body text-on-surface placeholder:text-outline" 
+                placeholder="Search communities..." 
+                type="text"
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+              />
             </div>
           </div>
         </div>
@@ -52,8 +65,8 @@ export function SubpanchayatsDirectoryPage({ token }: { token: string | null }) 
 
       <section className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {CATEGORIES.map((cat, idx) => {
-             const isMain = idx === 0;
+          {filteredCategories.map((cat, idx) => {
+             const isMain = idx === 0 && localSearch === '';
              const citizenCount = userStats[cat.id] || 0;
              const proposalCount = threadStats[cat.id] || 0;
 
@@ -62,7 +75,7 @@ export function SubpanchayatsDirectoryPage({ token }: { token: string | null }) 
                     <div>
                     <div className="flex justify-between items-start mb-12">
                         <div className="bg-secondary-container p-4 rounded-2xl">
-                        <span className="material-symbols-outlined text-on-secondary-container text-4xl">{cat.id === 'environment' ? 'forest' : cat.id === 'infrastructure' ? 'architecture' : 'diversity_3'}</span>
+                        <span className="material-symbols-outlined text-on-secondary-container text-4xl">{cat.id === 'environment' ? 'forest' : cat.id === 'infrastructure' ? 'architecture' : cat.id === 'policy' ? 'policy' : 'diversity_3'}</span>
                         </div>
                         {isMain && <span className="bg-primary text-on-primary px-4 py-1 rounded-full text-xs font-label uppercase tracking-widest font-bold">Priority focus</span>}
                     </div>
@@ -82,7 +95,10 @@ export function SubpanchayatsDirectoryPage({ token }: { token: string | null }) 
                             <span className="text-2xl font-black text-tertiary">{proposalCount}</span>
                             <span className="text-[10px] uppercase font-label tracking-tighter text-outline">Live Proposals</span>
                         </div>
-                        <button className="ml-auto bg-primary text-on-primary px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform flex items-center gap-2">
+                        <button 
+                          className="ml-auto bg-primary text-on-primary px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform flex items-center gap-2"
+                          onClick={() => navigate(`/?category=${cat.id}`)}
+                        >
                             Enter Circle <span className="material-symbols-outlined text-sm">arrow_forward</span>
                         </button>
                     </div>

@@ -86,7 +86,7 @@ export function ExpertApplicationModal({ token, onClose, onSuccess }: ExpertAppl
         
         <form onSubmit={submitApplication} className="p-8 space-y-6">
           <div>
-            <label className="block font-label text-xs font-bold text-outline-variant uppercase tracking-[0.1em] mb-2">Area of Expertise (Subpanchayat)</label>
+            <label className="block font-label text-xs font-bold text-on-surface-variant uppercase tracking-[0.1em] mb-2">Area of Expertise (Subpanchayat)</label>
             <select 
               className="w-full bg-surface border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none font-bold" 
               value={localCategory} 
@@ -99,7 +99,7 @@ export function ExpertApplicationModal({ token, onClose, onSuccess }: ExpertAppl
           </div>
 
           <div>
-            <label className="block font-label text-xs font-bold text-outline-variant uppercase tracking-[0.1em] mb-2">Statement of Qualifications</label>
+            <label className="block font-label text-xs font-bold text-on-surface-variant uppercase tracking-[0.1em] mb-2">Statement of Qualifications</label>
             <textarea 
               className="w-full bg-surface border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 h-24 resize-none font-body leading-relaxed" 
               placeholder="Briefly explain your experience in this field..." 
@@ -110,7 +110,7 @@ export function ExpertApplicationModal({ token, onClose, onSuccess }: ExpertAppl
           </div>
           
           <div>
-            <label className="block font-label text-xs font-bold text-outline-variant uppercase tracking-[0.1em] mb-2">Supporting Documents</label>
+            <label className="block font-label text-xs font-bold text-on-surface-variant uppercase tracking-[0.1em] mb-2">Supporting Documents</label>
             <div className="border-2 border-dashed border-outline-variant rounded-xl p-6 text-center">
                  <input 
                     type="file" 

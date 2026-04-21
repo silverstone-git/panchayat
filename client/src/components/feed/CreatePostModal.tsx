@@ -134,12 +134,12 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
         
         <form onSubmit={postIdea} className="p-8 space-y-6 max-h-[80vh] overflow-y-auto">
           <div>
-            <label className="block font-label text-xs font-bold text-outline-variant uppercase tracking-[0.1em] mb-2">Policy Title</label>
+            <label className="block font-label text-xs font-bold text-on-surface-variant uppercase tracking-[0.1em] mb-2">Policy Title</label>
             <input className="w-full bg-surface border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 font-headline font-bold text-lg" placeholder="e.g., Decentralized Solar Grid for Old Town" value={newTitle} onChange={e => setNewTitle(e.target.value)} required />
           </div>
 
           <div className="relative">
-            <label className="block font-label text-xs font-bold text-outline-variant uppercase tracking-[0.1em] mb-2">Description & Rationale</label>
+            <label className="block font-label text-xs font-bold text-on-surface-variant uppercase tracking-[0.1em] mb-2">Description & Rationale</label>
             <textarea 
               ref={descRef}
               className="w-full bg-surface border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 h-40 resize-none font-body leading-relaxed" 
@@ -160,7 +160,7 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
           </div>
           
           <div>
-            <label className="block font-label text-xs font-bold text-outline-variant uppercase tracking-[0.1em] mb-2">Attach Images</label>
+            <label className="block font-label text-xs font-bold text-on-surface-variant uppercase tracking-[0.1em] mb-2">Attach Images</label>
             <div className="border-2 border-dashed border-outline-variant rounded-xl p-4 text-center">
                  <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileSelect} accept="image/png,image/jpeg" multiple />
                  <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadedImages.length >= 4} className="bg-surface-container-high text-primary px-4 py-2 rounded-full font-bold text-sm shadow-sm hover:bg-surface-container-highest transition-colors disabled:opacity-50">

@@ -14,7 +14,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
-from src.api.v1 import ideas, feed, comments
+from src.api.v1 import ideas, feed, comments, images
 from src.services.kafka_service import kafka_service
 from src.core.tracing import setup_tracer
 from opentelemetry.instrumentation.fastapi import OpenTelemetryMiddleware
@@ -156,6 +156,7 @@ app.add_middleware(OpenTelemetryMiddleware)
 app.include_router(ideas.router, prefix="/api/v1/threads")
 app.include_router(feed.router, prefix="/api/v1/threads")
 app.include_router(comments.router, prefix="/api/v1/threads")
+app.include_router(images.router, prefix="/api/v1/threads")
 
 @app.get("/health")
 async def health():

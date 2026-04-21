@@ -10,7 +10,7 @@ from src.core.config import settings
 from fastapi import HTTPException
 
 class CommentService:
-    async def create_comment(self, db: AsyncSession, idea_id: UUID, comment_in: CommentCreate, author_id: str):
+    async def create_comment(self, db: AsyncSession, idea_id: UUID, comment_in: CommentCreate, author_id: str, author_name: str = None):
         # 0. Moderation check
         mod_result = await moderation_client.check_content(comment_in.content)
         if mod_result.get("is_flagged"):
@@ -53,6 +53,7 @@ class CommentService:
             path=path,
             depth=depth,
             author_id=author_id,
+            author_name=author_name,
             content=comment_in.content,
             status=status
         )
@@ -118,7 +119,10 @@ class CommentService:
                 "path": item.path,
                 "depth": item.depth,
                 "vote_count": item.vote_count,
+                "upvote_count": item.upvote_count,
+                "downvote_count": item.downvote_count,
                 "author_id": item.author_id,
+                "author_name": item.author_name,
                 "content": item.content,
                 "status": item.status,
                 "created_at": item.created_at,

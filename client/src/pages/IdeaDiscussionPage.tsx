@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Avatar } from '../components/common/Avatar';
 import { Comments } from '../components/comments/Comments';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export function IdeaDiscussionPage({ token }: { token: string | null }) {
   const { id } = useParams<{ id: string }>();
@@ -42,6 +44,9 @@ export function IdeaDiscussionPage({ token }: { token: string | null }) {
     fetchIdea();
   }, [id, token]);
 
+  if (loading) return <div className="pt-32 text-center text-primary font-headline text-2xl">Analyzing Proposal...</div>;
+  if (!idea) return <div className="pt-32 text-center text-error font-headline text-2xl">Proposal Not Found</div>;
+
   const totalVotes = (idea.upvote_count || 0) + (idea.downvote_count || 0);
   const agreePercent = totalVotes > 0 ? Math.round(((idea.upvote_count || 0) / totalVotes) * 100) : 0;
   const debatingPercent = 100 - agreePercent;
@@ -50,18 +55,19 @@ export function IdeaDiscussionPage({ token }: { token: string | null }) {
     <main className="pt-24 pb-32 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
       {/* Policy Content (Asymmetric Layout) */}
       <div className="lg:col-span-8">
-        <nav className="flex items-center gap-2 mb-8 text-sm text-on-surface-variant font-label cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(-1)}>
-          <span className="material-symbols-outlined text-sm">arrow_back</span>
-          <span>Back to Feed</span>
-          <span className="mx-2 text-outline-variant opacity-30">/</span>
-          <span className="text-secondary font-semibold capitalize">{idea.category}</span>
+        <nav className="mb-8 flex items-center text-sm font-label cursor-pointer text-on-surface-variant transition-colors" onClick={() => navigate('/')}>
+          <span className="material-symbols-outlined text-sm mr-2 text-primary">arrow_back</span>
+          <span className="hover:text-primary font-bold">Back to Feed</span>
+          <span className="mx-3 text-outline">/</span>
+          <span className="text-secondary font-bold capitalize">{idea.category}</span>
         </nav>
+
         
         <article>
           <header className="mb-10">
             <div className="mb-4 flex gap-2">
-              <span className="bg-secondary-fixed-dim text-on-secondary-fixed font-label text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">Active Legislation</span>
-              {idea.vote_count > 10 && <span className="bg-tertiary-fixed-dim text-on-tertiary-fixed font-label text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">Under Expert Review</span>}
+              <span className="bg-secondary-container text-on-secondary-container font-label text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-secondary-container">Active Legislation</span>
+              {idea.vote_count > 10 && <span className="bg-tertiary-container text-on-tertiary-container font-label text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">Under Expert Review</span>}
             </div>
             <h1 className="font-headline text-4xl md:text-5xl font-bold tracking-tight text-primary leading-tight">
               {idea.title}
@@ -72,13 +78,15 @@ export function IdeaDiscussionPage({ token }: { token: string | null }) {
             <section className="max-w-2xl bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-surface-container">
               <div className="flex items-center gap-3 mb-6">
                 <Avatar size={32} url={idea.author_avatar} />
-                <span className="font-label font-bold text-sm text-primary">u/{idea.author_id}</span>
+                <span className="font-label font-bold text-sm text-primary">u/{idea.author_name || idea.author_id}</span>
                 <span className="text-outline text-[11px] ml-auto">Posted recently</span>
               </div>
               <h3 className="font-headline text-2xl font-bold text-primary mb-4">Executive Summary</h3>
-              <p className="text-lg leading-relaxed mb-6 font-body whitespace-pre-wrap">
-                {idea.description}
-              </p>
+              <div className="prose prose-slate max-w-none text-lg leading-relaxed mb-6 font-body whitespace-pre-wrap text-on-surface-variant">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {idea.description}
+                </ReactMarkdown>
+              </div>
             </section>
 
             <div className="bg-surface-container-low p-8 rounded-xl space-y-6 border border-surface-container">
@@ -119,17 +127,17 @@ export function IdeaDiscussionPage({ token }: { token: string | null }) {
       <aside className="lg:col-span-4 space-y-10">
         <div className="bg-surface-container-lowest p-8 rounded-xl shadow-sm space-y-8 sticky top-28 border border-surface-container">
           <div>
-            <h5 className="font-label text-[10px] font-bold text-outline-variant uppercase tracking-[0.2em] mb-4">Policy Author</h5>
+            <h5 className="font-label text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] mb-4">Policy Author</h5>
             <div className="flex items-center gap-4">
               <Avatar size={56} url={idea.author_avatar} className="border-2 border-surface-container-highest" />
               <div>
-                <div className="font-headline font-black text-primary text-lg">u/{idea.author_id}</div>
+                <div className="font-headline font-black text-primary text-lg">u/{idea.author_name || idea.author_id}</div>
                 <div className="font-label text-[11px] font-bold text-secondary uppercase tracking-widest">Verified Citizen</div>
               </div>
             </div>
           </div>
           <div className="pt-6 border-t border-surface-container">
-            <h5 className="font-label text-[10px] font-bold text-outline-variant uppercase tracking-[0.2em] mb-4">Timeline</h5>
+            <h5 className="font-label text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] mb-4">Timeline</h5>
             <ul className="space-y-4">
               <li className="flex gap-4">
                 <div className="flex flex-col items-center">

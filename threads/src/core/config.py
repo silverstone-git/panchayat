@@ -49,6 +49,14 @@ class Settings(BaseSettings):
     OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://jaeger:4317"
     JAEGER_AGENT_PORT: int = 6831
 
+    # R2 Storage (Public for idea images)
+    R2_ACCOUNT_ID: str = ""
+    R2_BUCKET_NAME_PUBLIC: str = "panchayat"
+    R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC: str = ""
+    R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC: str = ""
+    R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC: str = ""
+    R2_PUBLIC_DEVELOPMENT_URL_PANCHAYAT_PUBLIC: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()

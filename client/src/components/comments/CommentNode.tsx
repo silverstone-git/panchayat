@@ -51,7 +51,7 @@ export function CommentNode({ comment, ideaId, token, userCommentVotes, voteComm
       <div className="flex-1">
         <div className="flex items-center gap-3 mb-2">
           <Avatar size={24} url={comment.author_avatar} />
-          <span className="font-label font-bold text-sm text-primary">u/{comment.author_id}</span>
+          <span className="font-label font-bold text-sm text-primary">u/{comment.author_name || comment.author_id}</span>
           <span className="text-outline text-[11px] ml-auto">Just now</span>
         </div>
         <p className="text-on-surface-variant text-sm leading-relaxed font-body mb-3">

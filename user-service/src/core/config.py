@@ -43,11 +43,18 @@ class Settings(BaseSettings):
 
     # Cloudflare R2
     R2_ACCOUNT_ID: str | None = None
-    R2_S3_API_BASE_URL_PANCHAYAT: str | None = None
-    R2_ACCESS_KEY_ID_PANCHAYAT: str | None = None
-    R2_SECRET_ACCESS_KEY_PANCHAYAT: str | None = None
-    CLOUDFLARE_API_TOKEN_PANCHAYAT: str | None = None
-    R2_BUCKET_NAME: str = "panchayat-uploads"
+    
+    # Public Bucket (for profile avatars etc, if needed here)
+    R2_BUCKET_NAME_PUBLIC: str = "panchayat"
+    R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC: str | None = None
+    R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC: str | None = None
+    R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC: str | None = None
+    
+    # Private Bucket (for expert docs, verification, legal)
+    R2_BUCKET_NAME_PRIVATE: str = "panchayat-private"
+    R2_S3_API_BASE_URL_PANCHAYAT_PRIVATE: str | None = Field(default=None, alias="R2_S3_API_BASE_URL_PANCHAYAT")
+    R2_ACCESS_KEY_ID_PANCHAYAT_PRIVATE: str | None = None
+    R2_SECRET_ACCESS_KEY_PANCHAYAT_PRIVATE: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

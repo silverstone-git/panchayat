@@ -8,14 +8,14 @@ from src.api.deps import get_current_user
 router = APIRouter()
 
 def get_r2_client():
-    if not all([settings.R2_ACCOUNT_ID, settings.R2_ACCESS_KEY_ID_PANCHAYAT, settings.R2_SECRET_ACCESS_KEY_PANCHAYAT]):
-        raise HTTPException(status_code=500, detail="R2 Storage is not configured")
+    if not all([settings.R2_ACCOUNT_ID, settings.R2_ACCESS_KEY_ID_PANCHAYAT_PRIVATE, settings.R2_SECRET_ACCESS_KEY_PANCHAYAT_PRIVATE]):
+        raise HTTPException(status_code=500, detail="R2 Private Storage is not configured")
     
     return boto3.client(
         's3',
         endpoint_url=f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
-        aws_access_key_id=settings.R2_ACCESS_KEY_ID_PANCHAYAT,
-        aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY_PANCHAYAT,
+        aws_access_key_id=settings.R2_ACCESS_KEY_ID_PANCHAYAT_PRIVATE,
+        aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY_PANCHAYAT_PRIVATE,
         config=Config(signature_version='s3v4'),
         region_name='auto'
     )
@@ -36,7 +36,7 @@ async def get_presigned_url(
         presigned_url = s3.generate_presigned_url(
             ClientMethod='put_object',
             Params={
-                'Bucket': settings.R2_BUCKET_NAME,
+                'Bucket': settings.R2_BUCKET_NAME_PRIVATE,
                 'Key': file_key,
                 'ContentType': content_type
             },
@@ -44,7 +44,8 @@ async def get_presigned_url(
         )
         
         # Construct public URL using the custom domain
-        public_url = f"{settings.R2_S3_API_BASE_URL_PANCHAYAT}/{file_key}"
+        public_url = f"{settings.R2_S3_API_BASE_URL_PANCHAYAT_PRIVATE}/{file_key}"
+
         if not public_url.startswith('http'):
              public_url = f"https://{public_url}"
 

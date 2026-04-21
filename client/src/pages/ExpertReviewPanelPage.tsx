@@ -80,10 +80,10 @@ export function ExpertReviewPanelPage({ token }: { token: string | null }) {
                   <div className="flex justify-between items-start mb-6">
                     <div className="space-y-1">
                       <div className="flex gap-2 mb-3">
-                        <span className="bg-secondary-fixed-dim text-on-secondary-fixed text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest">{prop.category}</span>
+                        <span className="bg-secondary-container text-on-secondary-container text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest">{prop.category}</span>
                       </div>
                       <h2 className="text-2xl md:text-3xl font-headline font-black text-primary tracking-tight">{prop.title}</h2>
-                      <p className="text-slate-500 font-label text-xs uppercase tracking-wider font-bold mt-1">Submitted by u/{prop.author_id} • {new Date(prop.created_at).toLocaleDateString()}</p>
+                      <p className="text-slate-500 font-label text-xs uppercase tracking-wider font-bold mt-1">Submitted by u/{prop.author_name || prop.author_id} • {new Date(prop.created_at).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right">
                       <div className="text-4xl font-black text-tertiary font-headline">{prop.vote_count}</div>

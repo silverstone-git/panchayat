@@ -5,6 +5,8 @@ from typing import Optional, List
 
 class ImageAttachment(BaseModel):
     url: str
+    key: Optional[str] = None
+    hash: Optional[str] = None
     caption: Optional[str] = None
 
 class IdeaCreate(BaseModel):
@@ -19,6 +21,7 @@ class IdeaResponse(BaseModel):
     description: str
     category: str
     author_id: str
+    author_name: Optional[str] = None
     vote_count: int
     upvote_count: int
     downvote_count: int

@@ -18,9 +18,10 @@ async def create_comment(
     idea_id: UUID,
     comment_in: CommentCreate,
     x_user_id: str = Header(..., alias="X-User-Id"),
+    x_user_name: str = Header(..., alias="X-User-Name"),
     db: AsyncSession = Depends(get_db)
 ):
-    return await comment_service.create_comment(db, idea_id, comment_in, x_user_id)
+    return await comment_service.create_comment(db, idea_id, comment_in, x_user_id, x_user_name)
 
 @router.get("/{idea_id}/comments", response_model=PaginatedCommentResponse)
 async def get_comments(

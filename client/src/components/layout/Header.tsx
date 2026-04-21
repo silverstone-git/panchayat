@@ -18,7 +18,13 @@ export function Header({ theme, toggleTheme, profile, handleLogout, searchQuery,
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const isActive = (path: string) => location.pathname === path ? 'text-primary bg-primary/10 px-3 py-1.5 rounded-xl' : 'text-slate-500 hover:text-primary';
+  const getNavLinkClass = (path: string) => {
+    const base = "font-label text-[11px] font-semibold uppercase tracking-wider transition-all px-4 py-2 rounded-xl cursor-pointer flex items-center justify-center";
+    const active = location.pathname === path 
+      ? "bg-secondary-container text-on-secondary-container shadow-sm" 
+      : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary";
+    return `${base} ${active}`;
+  };
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -50,11 +56,11 @@ export function Header({ theme, toggleTheme, profile, handleLogout, searchQuery,
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden lg:flex gap-4 items-center border-r border-outline-variant pr-6">
-            <Link to="/impact" className={`font-label text-[11px] font-semibold uppercase tracking-wider transition-colors cursor-pointer ${isActive('/impact')}`}>Impact</Link>
-            <Link to="/groups" className={`font-label text-[11px] font-semibold uppercase tracking-wider transition-colors cursor-pointer ${isActive('/groups')}`}>Groups</Link>
-            <Link to="/expert-review" className={`font-label text-[11px] font-semibold uppercase tracking-wider transition-colors cursor-pointer ${isActive('/expert-review')}`}>Review</Link>
-            <Link to="/funds" className={`font-label text-[11px] font-semibold uppercase tracking-wider transition-colors cursor-pointer ${isActive('/funds')}`}>Funds</Link>
+          <div className="hidden lg:flex gap-2 items-center border-r border-outline-variant pr-6">
+            <Link to="/impact" className={getNavLinkClass('/impact')}>Impact</Link>
+            <Link to="/subpanchayats" className={getNavLinkClass('/subpanchayats')}>Subpanchayats</Link>
+            <Link to="/expert-review" className={getNavLinkClass('/expert-review')}>Review</Link>
+            <Link to="/funds" className={getNavLinkClass('/funds')}>Funds</Link>
           </div>
 
           <ThemeToggle theme={theme} toggle={toggleTheme} />

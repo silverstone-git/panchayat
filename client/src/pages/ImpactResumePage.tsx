@@ -18,8 +18,8 @@ export function ImpactResumePage({ profile, token }: { profile: any, token: stri
             <Avatar size={64} url={profile.profile_data?.avatar_url} className="mb-4" />
             <h3 className="font-headline font-bold text-primary text-lg">{profile.username}</h3>
             <p className="text-sm text-secondary font-bold uppercase tracking-widest mt-1">Level {profile.level}</p>
-            <div className="mt-4 py-1.5 px-4 bg-tertiary-fixed rounded-full inline-block w-max">
-              <span className="text-[11px] font-black text-on-tertiary-fixed uppercase tracking-widest font-label">Impact Score: {profile.xp}</span>
+            <div className="mt-4 py-1.5 px-4 bg-tertiary-container rounded-full inline-block w-max">
+              <span className="text-[11px] font-black text-on-tertiary-container uppercase tracking-widest font-label">Impact Score: {profile.xp}</span>
             </div>
           </div>
           <nav className="space-y-2">
@@ -56,14 +56,14 @@ export function ImpactResumePage({ profile, token }: { profile: any, token: stri
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30 shadow-inner">
-                  <div className="flex items-center gap-2 mb-2 text-outline-variant">
+                  <div className="flex items-center gap-2 mb-2 text-on-surface-variant">
                     <span className="material-symbols-outlined text-sm">history_edu</span>
                     <span className="text-[10px] font-bold uppercase tracking-widest font-label">Policies Authored</span>
                   </div>
                   <span className="text-3xl font-black text-primary font-headline">{profile.authored_count}</span>
                 </div>
                 <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30 shadow-inner">
-                  <div className="flex items-center gap-2 mb-2 text-outline-variant">
+                  <div className="flex items-center gap-2 mb-2 text-on-surface-variant">
                     <span className="material-symbols-outlined text-sm">how_to_vote</span>
                     <span className="text-[10px] font-bold uppercase tracking-widest font-label">Votes Cast</span>
                   </div>
@@ -105,7 +105,7 @@ export function ImpactResumePage({ profile, token }: { profile: any, token: stri
                 <div key={idea.id} className="group border border-transparent hover:border-surface-container-high rounded-xl p-4 -mx-4 transition-all cursor-pointer" onClick={() => navigate(`/idea/${idea.id}`)}>
                     <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-3">
-                            <span className="bg-secondary-fixed text-on-secondary-fixed font-bold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full">{idea.status}</span>
+                            <span className="bg-secondary-container text-on-secondary-container font-bold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full">{idea.status}</span>
                             <h4 className="text-lg font-bold text-primary group-hover:text-secondary transition-colors font-headline">{idea.title}</h4>
                         </div>
                         <span className="text-[10px] text-outline font-bold uppercase tracking-widest">{new Date(idea.created_at).toLocaleDateString()}</span>

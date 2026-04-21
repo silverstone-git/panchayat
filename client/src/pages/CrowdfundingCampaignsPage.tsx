@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export function CrowdfundingGroupsPage({ token }: { token: string | null }) {
+export function CrowdfundingCampaignsPage({ token }: { token: string | null }) {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,7 +35,7 @@ export function CrowdfundingGroupsPage({ token }: { token: string | null }) {
             Collective Action,<br/>Enduring Impact.
           </h2>
           <p className="text-xl text-on-surface-variant max-w-xl leading-relaxed font-body">
-            Join peer-led task groups or fuel NGO initiatives that reshape our local landscape. Every contribution is a brick in our civic foundation.
+            Join peer-led Subpanchayat tasks or fuel NGO initiatives that reshape our local landscape. Every contribution is a brick in our civic foundation.
           </p>
         </div>
         <div className="md:col-span-4 flex flex-col items-start md:items-end gap-4">

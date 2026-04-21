@@ -44,7 +44,7 @@ export function HomeFeedPage({ token, profile, updateAvatar, searchQuery }: any)
         {displayHero && (
           <section className="grid grid-cols-1 md:grid-cols-12 gap-8 items-end mb-4 animate-in fade-in duration-700">
             <div className="md:col-span-7 space-y-6">
-              <span className="font-label text-[11px] font-semibold uppercase tracking-wider text-tertiary-container bg-tertiary-fixed px-3 py-1 rounded-full">Top Trending Initiative</span>
+              <span className="font-label text-[11px] font-semibold uppercase tracking-wider text-on-tertiary-container bg-tertiary-container px-3 py-1 rounded-full">Top Trending Initiative</span>
               <h2 className="text-4xl md:text-5xl font-headline font-extrabold text-primary leading-tight tracking-tighter">
                 {trendingIdea.title}
               </h2>

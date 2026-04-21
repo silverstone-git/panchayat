@@ -10,7 +10,7 @@ import { Header } from './components/layout/Header';
 
 import { HomeFeedPage } from './pages/HomeFeedPage';
 import { IdeaDiscussionPage } from './pages/IdeaDiscussionPage';
-import { CrowdfundingGroupsPage } from './pages/CrowdfundingGroupsPage';
+import { CrowdfundingCampaignsPage } from './pages/CrowdfundingCampaignsPage';
 import { ImpactResumePage } from './pages/ImpactResumePage';
 import { ExpertReviewPanelPage } from './pages/ExpertReviewPanelPage';
 import { SubpanchayatsDirectoryPage } from './pages/SubpanchayatsDirectoryPage';
@@ -44,8 +44,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomeFeedPage token={token} profile={profile} updateAvatar={updateAvatar} searchQuery={searchQuery} />} />
           <Route path="/idea/:id" element={<IdeaDiscussionPage token={token} />} />
-          <Route path="/groups" element={<SubpanchayatsDirectoryPage token={token} />} />
-          <Route path="/funds" element={<CrowdfundingGroupsPage token={token} />} />
+          <Route path="/subpanchayats" element={<SubpanchayatsDirectoryPage token={token} />} />
+          <Route path="/funds" element={<CrowdfundingCampaignsPage token={token} />} />
           <Route path="/impact" element={<ImpactResumePage profile={profile} token={token} />} />
           <Route path="/expert-review" element={<ExpertReviewPanelPage token={token} />} />
           <Route path="/moderation" element={<ModerationDashboardPage token={token} profile={profile} />} />

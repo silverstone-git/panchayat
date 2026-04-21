@@ -8,7 +8,7 @@ export function useFeed(token: string | null, isLoggedIn: boolean) {
   const [loading, setLoading] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(new URLSearchParams(window.location.search).get('category'));
   const [sortBy, setSortBy] = useState<'new' | 'trending'>('new');
 
   const fetchFeedData = useCallback(async (pageNum: number, query: string, category: string | null, sort: string, append = false) => {

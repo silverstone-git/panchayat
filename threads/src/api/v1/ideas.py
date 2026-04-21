@@ -21,7 +21,7 @@ async def create_idea(
     x_user_name: str = Header(..., alias="X-User-Name"),
     db: AsyncSession = Depends(get_db)
 ):
-    return await idea_service.create_idea(db, idea_in, x_user_id)
+    return await idea_service.create_idea(db, idea_in, x_user_id, x_user_name)
 
 @router.get("/{id}", response_model=IdeaResponse)
 async def get_idea(id: UUID, db: AsyncSession = Depends(get_db)):

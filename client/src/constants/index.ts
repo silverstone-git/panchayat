@@ -12,4 +12,5 @@ export const CATEGORIES = [
   { id: 'environment', name: 'Environment', icon: '🌍' },
   { id: 'governance', name: 'Local Governance', icon: '🏘️' },
   { id: 'infrastructure', name: 'Infrastructure', icon: '🛣️' },
+  { id: 'policy', name: 'Policy', icon: '📜' },
 ];

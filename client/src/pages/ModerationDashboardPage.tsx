@@ -109,7 +109,7 @@ export function ModerationDashboardPage({ token, profile }: { token: string | nu
                   <div className="text-xs text-outline font-bold">{new Date(app.created_at).toLocaleDateString()}</div>
                 </div>
                 <div className="mb-6">
-                  <h5 className="text-xs font-bold text-outline-variant uppercase tracking-widest mb-2">Statement</h5>
+                  <h5 className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Statement</h5>
                   <p className="text-sm text-on-surface-variant bg-surface-container-low p-4 rounded-xl">{app.statement}</p>
                 </div>
                 <div className="flex gap-3 pt-4 border-t border-surface-container">
@@ -136,7 +136,7 @@ export function ModerationDashboardPage({ token, profile }: { token: string | nu
                   <div className="text-xs text-outline font-bold">{new Date(report.created_at).toLocaleDateString()}</div>
                 </div>
                 <div className="mb-6">
-                  <h5 className="text-xs font-bold text-outline-variant uppercase tracking-widest mb-2">Reason for Report</h5>
+                  <h5 className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Reason for Report</h5>
                   <p className="text-sm text-on-surface-variant bg-surface-container-low p-4 rounded-xl">{report.reason}</p>
                 </div>
                 <div className="flex gap-3 pt-4 border-t border-surface-container">

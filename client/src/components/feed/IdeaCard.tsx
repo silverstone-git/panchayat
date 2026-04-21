@@ -35,12 +35,12 @@ export function IdeaCard({ item, userVotes, vote, expandedIdea, setExpandedIdea,
             <Avatar size={20} url={item.author_avatar} />
             <span className="text-[10px] font-bold uppercase tracking-widest text-secondary font-label">p/{item.category}</span>
             <span className="text-slate-300">•</span>
-            <span className="text-xs text-outline-variant">Posted by u/{item.author_id}</span>
+            <span className="text-xs text-on-surface-variant">Posted by u/{item.author_name || item.author_id}</span>
           </div>
           
           {/* Stubbed Expert Review Tag */}
           {item.vote_count > 10 && (
-            <span className="bg-secondary-fixed-dim text-on-secondary-fixed text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest font-label ml-2 shrink-0">Under Expert Review</span>
+            <span className="bg-tertiary-container text-on-tertiary-container text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest font-label ml-2 shrink-0">Under Expert Review</span>
           )}
         </div>
         
