@@ -1,19 +1,24 @@
-
-
 services:
   gateway:
     image: panchayat-gateway:latest
     build:
       context: ./gateway
+      dockerfile: Dockerfile
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - USER_SERVICE_URI=http://user-service:8000
       - THREADS_SERVICE_URI=http://threads:8000
       - VOTING_SERVICE_URI=http://voting:8000
+      - CROWDFUND_SERVICE_URI=http://crowdfund-service:8000
       - MODERATION_SERVICE_URI=http://moderation-service:8000
       - EXPERT_REVIEW_SERVICE_URI=http://expert-review-service:8000
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
     deploy:
       replicas: 2
       restart_policy:
@@ -28,16 +33,28 @@ services:
     image: panchayat-threads:latest
     build:
       context: ./threads
+      dockerfile: Dockerfile
     environment:
       - POSTGRES_HOST=postgres-db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=threads_db
       - REDIS_HOST=redis-cache
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - ELASTIC_USER=elastic
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - MODERATION_SERVICE_URL=http://moderation-service:8000
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POPULAR_VOTE_THRESHOLD=1
+      - R2_ACCOUNT_ID=${R2_ACCOUNT_ID}
+      - R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC=${R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC}
+      - R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC=${R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC}
+      - R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC=${R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC}
+      - R2_PUBLIC_DEVELOPMENT_URL_PANCHAYAT_PUBLIC=${R2_PUBLIC_DEVELOPMENT_URL_PANCHAYAT_PUBLIC}
+    depends_on:
+      - kafka
+      - elasticsearch
     deploy:
       replicas: 3
       update_config:
@@ -50,13 +67,17 @@ services:
     image: panchayat-voting:latest
     build:
       context: ./voting
+      dockerfile: Dockerfile
     environment:
       - POSTGRES_HOST=postgres-db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=voting_db
       - REDIS_HOST=redis-cache
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    depends_on:
+      - kafka
     deploy:
       replicas: 3
     networks:
@@ -66,13 +87,24 @@ services:
     image: panchayat-user-service:latest
     build:
       context: ./user-service
+      dockerfile: Dockerfile
     environment:
       - POSTGRES_HOST=postgres-db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=users_db
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - R2_ACCOUNT_ID=${R2_ACCOUNT_ID}
+      - R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC=${R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC}
+      - R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC=${R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC}
+      - R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC=${R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC}
+      - R2_S3_API_BASE_URL_PANCHAYAT_PRIVATE=${R2_S3_API_BASE_URL_PANCHAYAT}
+      - R2_ACCESS_KEY_ID_PANCHAYAT_PRIVATE=${R2_ACCESS_KEY_ID_PANCHAYAT_PRIVATE}
+      - R2_SECRET_ACCESS_KEY_PANCHAYAT_PRIVATE=${R2_SECRET_ACCESS_KEY_PANCHAYAT_PRIVATE}
+    depends_on:
+      - kafka
     deploy:
       replicas: 2
     networks:
@@ -82,8 +114,17 @@ services:
     image: panchayat-moderation:latest
     build:
       context: ./moderation-service
+      dockerfile: Dockerfile
     environment:
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=moderation_db
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    depends_on:
+      - kafka
+      - postgres-db
     deploy:
       replicas: 2
     networks:
@@ -93,12 +134,17 @@ services:
     image: panchayat-expert-review:latest
     build:
       context: ./expert-review-service
+      dockerfile: Dockerfile
     environment:
       - POSTGRES_HOST=postgres-db
-      - POSTGRES_DB=expert_review_db
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=expert_review_db
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+    depends_on:
+      - kafka
+      - postgres-db
     deploy:
       replicas: 2
     networks:
@@ -108,8 +154,19 @@ services:
     image: panchayat-notification:latest
     build:
       context: ./notification-service
+      dockerfile: Dockerfile
     environment:
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=notification_db
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+    depends_on:
+      - kafka
+      - postgres-db
+    deploy:
+      replicas: 1
     networks:
       - panchayat-network
 
@@ -117,12 +174,70 @@ services:
     image: panchayat-gov-submit:latest
     build:
       context: ./gov-submit-service
+      dockerfile: Dockerfile
     environment:
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=gov_submit_db
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+    depends_on:
+      - kafka
+      - postgres-db
+    deploy:
+      replicas: 1
     networks:
       - panchayat-network
 
-  # Infrastructure
+  crowdfund-service:
+    image: panchayat-crowdfund:latest
+    build:
+      context: ./crowdfund-service
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=crowdfund_db
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+    depends_on:
+      - kafka
+      - postgres-db
+    deploy:
+      replicas: 1
+    networks:
+      - panchayat-network
+
+  client:
+    image: panchayat-client:latest
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    environment:
+      - GATEWAY_URL=http://gateway:8080
+      - THREADS_URL=http://threads:8000
+      - VOTING_URL=http://voting:8000
+    ports:
+      - "5173:80"
+    depends_on:
+      - gateway
+    deploy:
+      replicas: 2
+    networks:
+      - panchayat-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "14250:14250"
+      - "4317:4317"
+      - "4318:4318"
+    networks:
+      - panchayat-network
+
   postgres-db:
     image: postgres:15
     environment:
@@ -148,8 +263,12 @@ services:
     environment:
       - discovery.type=single-node
       - cluster.routing.allocation.disk.threshold_enabled=false
-      - xpack.security.enabled=false
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
     networks:
       - panchayat-network
 
@@ -159,17 +278,19 @@ services:
       KAFKA_NODE_ID: 1
       CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CREATE_TOPICS: "ideas-events:1:1,votes-events:1:1,xp-events:1:1,content.hidden:1:1,moderation.reports:1:1,dead-letter-queue:1:1,expert-events:1:1"
+    ports:
+      - "9092:9092"
     networks:
       - panchayat-network
 
-  # Monitoring Stack
   prometheus:
     image: prom/prometheus:latest
     volumes:
@@ -186,6 +307,7 @@ services:
     image: grafana/grafana:latest
     volumes:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
     ports:
       - "3000:3000"
     environment:
@@ -193,11 +315,10 @@ services:
     networks:
       - panchayat-network
 
-  # Exporters
   postgres-exporter:
-    image: prometheuscommunity/postgres-exporter
+    image: quay.io/prometheuscommunity/postgres-exporter
     environment:
-      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/panchayat_db?sslmode=disable
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/threads_db?sslmode=disable
     networks:
       - panchayat-network
 
@@ -208,17 +329,9 @@ services:
     networks:
       - panchayat-network
 
-  elasticsearch-exporter:
-    image: prometheuscommunity/elasticsearch-exporter
-    command:
-      - '--es.uri=http://elasticsearch:9200'
-    networks:
-      - panchayat-network
-
   kafka-exporter:
     image: danielqsj/kafka-exporter
-    command:
-      - '--kafka.server=kafka:29092'
+    command: ["--kafka.server=kafka:29092"]
     networks:
       - panchayat-network
 
