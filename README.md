@@ -47,6 +47,51 @@ Panchayat uses a polyglot microservice architecture designed for maximum concurr
 - **Apache Kafka (KRaft):** High-throughput event bus for inter-service communication.
 - **Docker & Docker Compose:** Standardized container orchestration.
 
+## Architecture diagram
+
+```mermaid
+flowchart TD
+    Client["**Client** (React/Vite)\nMaterial 3 UI"]
+    Gateway["**API Gateway**\nJava Spring Cloud"]
+ 
+    UserSvc["**User Service**\nFastAPI / Auth / XP"]
+    VoteSvc["**Voting Service**\nFastAPI / Redis"]
+    ThreadSvc["**Thread Service**\nFastAPI / Search"]
+    ModSvc["**Moderation Svc**\nFastAPI + ML"]
+ 
+    ExpertSvc["**Expert Review Svc**\nSpring MVC"]
+    NotifSvc["**Notification Svc**\nSpring MVC"]
+    GovSvc["**Gov Submit Svc**\nSpring MVC"]
+    CrowdSvc["**Crowdfund Svc**\nSpring MVC"]
+ 
+    Kafka["**Kafka Event Bus**\nAsync Backbone / DLQ"]
+ 
+    PG["**PostgreSQL**\nPer-Service DBs"]
+    ES["**Elasticsearch**\nSearch/Feed"]
+    R2["**Cloudflare R2**\nPublic/Private"]
+    Grafana["**Grafana + Prom**\nObservability"]
+ 
+    Client --> Gateway
+ 
+    Gateway -.-> UserSvc
+    Gateway -.-> VoteSvc
+    Gateway -.-> ThreadSvc
+    Gateway -.-> ModSvc
+ 
+    UserSvc & VoteSvc & ThreadSvc & ModSvc & ExpertSvc & NotifSvc & GovSvc & CrowdSvc --> Kafka
+ 
+    Kafka -.-> ExpertSvc
+    Kafka -.-> NotifSvc
+    Kafka -.-> GovSvc
+    Kafka -.-> CrowdSvc
+ 
+    UserSvc --- PG
+    ThreadSvc --- ES
+    ModSvc --- R2
+    NotifSvc --- Grafana
+```
+
+
 ---
 
 ## 🚀 How to Start (Development)
