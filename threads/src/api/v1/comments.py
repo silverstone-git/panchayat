@@ -11,9 +11,9 @@ from src.schemas.comment import CommentCreate, CommentResponse, PaginatedComment
 from src.services.comment_service import comment_service
 from uuid import UUID
 
-router = APIRouter(prefix="/ideas", tags=["Comments"])
+router = APIRouter(tags=["Comments"])
 
-@router.post("/{idea_id}/comments", response_model=CommentResponse, status_code=201)
+@router.post("/ideas/{idea_id}/comments", response_model=CommentResponse, status_code=201)
 async def create_comment(
     idea_id: UUID,
     comment_in: CommentCreate,
@@ -23,7 +23,7 @@ async def create_comment(
 ):
     return await comment_service.create_comment(db, idea_id, comment_in, x_user_id, x_user_name)
 
-@router.get("/{idea_id}/comments", response_model=PaginatedCommentResponse)
+@router.get("/ideas/{idea_id}/comments", response_model=PaginatedCommentResponse)
 async def get_comments(
     idea_id: UUID,
     parent_id: UUID | None = Query(None, description="Fetch replies for a specific comment"),
@@ -34,7 +34,7 @@ async def get_comments(
 ):
     return await comment_service.get_comments_for_idea_paginated(db, idea_id, parent_id, sort, page, size)
 
-@router.post("/{comment_id}/report", status_code=202)
+@router.post("/comments/{comment_id}/report", status_code=202)
 async def report_comment(
     comment_id: UUID,
     report_in: ReportRequest,

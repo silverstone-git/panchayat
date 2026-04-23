@@ -59,8 +59,32 @@ class CommentService:
         )
         
         db.add(new_comment)
+        
+        # Increment comment count on Idea
+        idea.comment_count += 1
+        
         await db.commit()
         await db.refresh(new_comment)
+        await db.refresh(idea)
+
+        # Update Elasticsearch with new comment count
+        from src.services.search_service import search_service
+        from src.services.cache_service import cache_service
+        await search_service.index_idea(str(idea.id), {
+            "title": idea.title,
+            "description": idea.description,
+            "category": idea.category,
+            "author_id": idea.author_id,
+            "author_name": idea.author_name,
+            "vote_count": idea.vote_count,
+            "upvote_count": idea.upvote_count,
+            "downvote_count": idea.downvote_count,
+            "comment_count": idea.comment_count,
+            "status": idea.status,
+            "created_at": idea.created_at.isoformat(),
+            "images": idea.images
+        })
+        await cache_service.clear_cache_for_idea(str(idea.id))
 
         # Emit XP event
         xp_amount = 20 if not parent_id else 10

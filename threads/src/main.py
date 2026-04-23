@@ -49,6 +49,7 @@ async def reindex_all_ideas():
                         "vote_count": idea.vote_count,
                         "upvote_count": idea.upvote_count,
                         "downvote_count": idea.downvote_count,
+                        "comment_count": idea.comment_count,
                         "status": idea.status,
                         "created_at": idea.created_at.isoformat(),
                         "images": idea.images
@@ -59,6 +60,8 @@ async def reindex_all_ideas():
         logger.error(f"Error during scheduled reindexing: {e}")
 
 async def run_periodic_reindex():
+    # Run initial sync on startup
+    await reindex_all_ideas()
     while True:
         await asyncio.sleep(1800) # 30 minutes
         await reindex_all_ideas()
@@ -129,11 +132,14 @@ async def handle_kafka_event(payload):
                         "description": idea.description,
                         "category": idea.category,
                         "author_id": idea.author_id,
+                        "author_name": idea.author_name,
                         "vote_count": idea.vote_count,
                         "upvote_count": idea.upvote_count,
                         "downvote_count": idea.downvote_count,
+                        "comment_count": idea.comment_count,
                         "status": idea.status,
-                        "created_at": idea.created_at.isoformat()
+                        "created_at": idea.created_at.isoformat(),
+                        "images": idea.images
                     })
                     await cache_service.clear_cache_for_idea(idea_id)
         else:

@@ -25,6 +25,7 @@ class IdeaResponse(BaseModel):
     vote_count: int
     upvote_count: int
     downvote_count: int
+    comment_count: int = 0
     status: str
     created_at: datetime
     images: Optional[List[ImageAttachment]] = []

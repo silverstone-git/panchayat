@@ -127,11 +127,21 @@ export function CommentNode({ comment, ideaId, token, userCommentVotes, voteComm
 
         {hasMore && (
           <button 
-            onClick={() => { const next = page + 1; setPage(next); fetchReplies(next); }} 
-            className="text-xs font-bold text-secondary mt-3 hover:underline"
+            onClick={() => { 
+              const next = replies.length === 0 ? 1 : page + 1;
+              if (replies.length > 0) setPage(next);
+              fetchReplies(next); 
+            }} 
+            className="text-xs font-bold text-secondary mt-3 hover:underline flex items-center gap-1"
             disabled={loadingReplies}
           >
-            {loadingReplies ? 'Loading...' : 'Load more replies...'}
+            {loadingReplies ? (
+              'Loading...'
+            ) : replies.length === 0 ? (
+              <><span className="material-symbols-outlined text-sm">subdirectory_arrow_right</span> View {comment.reply_count} replies</>
+            ) : (
+              'Load more replies...'
+            )}
           </button>
         )}
       </div>
