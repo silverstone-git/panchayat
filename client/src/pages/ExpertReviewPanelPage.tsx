@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toaster } from '../utils/toaster';
 
 export function ExpertReviewPanelPage({ token }: { token: string | null }) {
   const [proposals, setProposals] = useState<any[]>([]);
@@ -18,6 +19,7 @@ export function ExpertReviewPanelPage({ token }: { token: string | null }) {
       }
     } catch (e) {
       console.error("Error fetching review queue", e);
+      toaster.error("Error fetching review queue");
     } finally {
       setLoading(false);
     }
@@ -42,14 +44,15 @@ export function ExpertReviewPanelPage({ token }: { token: string | null }) {
         body: JSON.stringify({ ideaId, action, notes })
       });
       if (res.ok) {
-        alert("Review submitted successfully.");
+        toaster.success("Review submitted successfully.");
         fetchQueue(); // Refresh queue
       } else {
-        const data = await res.json();
-        alert(data.detail || "Failed to submit review");
+        const data = await res.json().catch(() => null);
+        toaster.error(data?.detail || "Failed to submit review");
       }
     } catch (e) {
       console.error(e);
+      toaster.error("An error occurred while submitting your review.");
     }
   };
 

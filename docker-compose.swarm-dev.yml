@@ -459,11 +459,11 @@ services:
     healthcheck:
       test:
       - CMD-SHELL
-      - curl -s http://localhost:9200 > /dev/null || exit 1
+      - curl -s -u elastic:${ELASTIC_PASSWORD} http://localhost:9200 > /dev/null || exit 1
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 30s
+      retries: 15
+      start_period: 180s
     networks:
     - demovox-network
   kafka:

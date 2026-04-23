@@ -23,35 +23,35 @@ export default function App() {
   
   const [searchQuery, setSearchQuery] = useState('');
 
-  if (!isLoggedIn || !token) {
-    return <AuthScreen onAuthSuccess={handleAuthSuccess} />;
-  }
-
   return (
     <BrowserRouter>
       <ToasterContainer />
-      <div className="bg-surface text-on-surface min-h-screen font-body">
-        <Header 
-          theme={theme} 
-          toggleTheme={toggleTheme} 
-          profile={profile} 
-          handleLogout={handleLogout}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          handleCategoryChange={() => {}}
-        />
+      {!isLoggedIn || !token ? (
+        <AuthScreen onAuthSuccess={handleAuthSuccess} />
+      ) : (
+        <div className="bg-surface text-on-surface min-h-screen font-body">
+          <Header 
+            theme={theme} 
+            toggleTheme={toggleTheme} 
+            profile={profile} 
+            handleLogout={handleLogout}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            handleCategoryChange={() => {}}
+          />
 
-        <Routes>
-          <Route path="/" element={<HomeFeedPage token={token} profile={profile} updateAvatar={updateAvatar} searchQuery={searchQuery} />} />
-          <Route path="/idea/:id" element={<IdeaDiscussionPage token={token} />} />
-          <Route path="/subpanchayats" element={<SubpanchayatsDirectoryPage token={token} />} />
-          <Route path="/funds" element={<CrowdfundingCampaignsPage token={token} />} />
-          <Route path="/impact" element={<ImpactResumePage profile={profile} token={token} />} />
-          <Route path="/expert-review" element={<ExpertReviewPanelPage token={token} />} />
-          <Route path="/moderation" element={<ModerationDashboardPage token={token} profile={profile} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
+          <Routes>
+            <Route path="/" element={<HomeFeedPage token={token} profile={profile} updateAvatar={updateAvatar} searchQuery={searchQuery} />} />
+            <Route path="/idea/:id" element={<IdeaDiscussionPage token={token} />} />
+            <Route path="/subpanchayats" element={<SubpanchayatsDirectoryPage token={token} />} />
+            <Route path="/funds" element={<CrowdfundingCampaignsPage token={token} />} />
+            <Route path="/impact" element={<ImpactResumePage profile={profile} token={token} />} />
+            <Route path="/expert-review" element={<ExpertReviewPanelPage token={token} />} />
+            <Route path="/moderation" element={<ModerationDashboardPage token={token} profile={profile} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      )}
     </BrowserRouter>
   );
 }

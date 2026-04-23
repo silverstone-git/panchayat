@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CATEGORIES } from '../constants';
+import { toaster } from '../utils/toaster';
 
 export function ModerationDashboardPage({ token, profile }: { token: string | null, profile: any }) {
   const [applications, setApplications] = useState<any[]>([]);
@@ -46,9 +47,17 @@ export function ModerationDashboardPage({ token, profile }: { token: string | nu
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ action, notes })
       });
-      if (res.ok) fetchApplications();
-      else alert('Failed to review application');
-    } catch (e) { console.error(e); }
+      if (res.ok) {
+        toaster.success(`Application ${action.toLowerCase()}d successfully`);
+        fetchApplications();
+      } else {
+        const err = await res.json().catch(() => null);
+        toaster.error(err?.detail || 'Failed to review application');
+      }
+    } catch (e) { 
+      console.error(e);
+      toaster.error("An error occurred during review");
+    }
   };
 
   const handleReportAction = async (reportId: number, action: 'HIDE' | 'IGNORE') => {
@@ -60,9 +69,17 @@ export function ModerationDashboardPage({ token, profile }: { token: string | nu
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ action, notes })
       });
-      if (res.ok) fetchReports();
-      else alert('Failed to take action on report');
-    } catch (e) { console.error(e); }
+      if (res.ok) {
+        toaster.success(`Report ${action.toLowerCase()}d successfully`);
+        fetchReports();
+      } else {
+        const err = await res.json().catch(() => null);
+        toaster.error(err?.detail || 'Failed to take action on report');
+      }
+    } catch (e) { 
+      console.error(e);
+      toaster.error("An error occurred during report handling");
+    }
   };
 
   const getCategoryName = (id: string) => CATEGORIES.find(c => c.id === id)?.name || id;

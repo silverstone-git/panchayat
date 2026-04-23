@@ -1,5 +1,6 @@
 import React, { useState, FormEvent, useRef } from 'react';
 import { CATEGORIES } from '../../constants';
+import { toaster } from '../../utils/toaster';
 
 interface ExpertApplicationModalProps {
   token: string | null;
@@ -45,7 +46,7 @@ export function ExpertApplicationModal({ token, onClose, onSuccess }: ExpertAppl
         setUploadedUrls(prev => [...prev, public_url]);
     } catch (err) {
         console.error("Upload error", err);
-        alert("Upload failed. Check console.");
+        toaster.error("Upload failed. Check console.");
     } finally {
         setIsUploading(false);
     }
@@ -55,7 +56,7 @@ export function ExpertApplicationModal({ token, onClose, onSuccess }: ExpertAppl
     e.preventDefault();
     if (!token) return;
     if (uploadedUrls.length === 0) {
-        alert("Please upload at least one supporting document (e.g. CV or ID).");
+        toaster.error("Please upload at least one supporting document (e.g. CV or ID).");
         return;
     }
     
@@ -66,11 +67,11 @@ export function ExpertApplicationModal({ token, onClose, onSuccess }: ExpertAppl
     });
     
     if (res.ok) {
-      alert("Application submitted successfully. A Moderator will review it shortly.");
+      toaster.success("Application submitted successfully. A Moderator will review it shortly.");
       onSuccess();
     } else {
-        const error = await res.json();
-        alert(error.detail || "Failed to submit application");
+        const error = await res.json().catch(() => null);
+        toaster.error(error?.detail || "Failed to submit application");
     }
   };
 

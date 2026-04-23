@@ -301,7 +301,7 @@ export function IdeaDiscussionPage({ token }: { token: string | null }) {
                         navigator.share({ title: idea.title, url: window.location.href }).catch(console.error);
                     } else {
                         navigator.clipboard.writeText(window.location.href);
-                        alert('Link copied!');
+                        toaster.success('Link copied to clipboard!');
                     }
                 }}
                 className="w-full mt-3 bg-surface-container-high text-primary py-3 rounded-full font-bold shadow-sm hover:bg-surface-container-highest transition-all flex items-center justify-center gap-2"

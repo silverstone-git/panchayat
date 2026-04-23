@@ -1,4 +1,5 @@
 import React, { useState, FormEvent } from 'react';
+import { toaster } from '../../utils/toaster';
 
 export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: (token: string) => void }) {
   const [username, setUsername] = useState('');
@@ -8,19 +9,27 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: (token: string) =
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
-    const params = new URLSearchParams();
-    params.append('username', username);
-    params.append('password', password);
-    const res = await fetch('/api/v1/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params
-    });
-    if (res.ok) {
-      const data = await res.json();
-      onAuthSuccess(data.access_token);
-    } else {
-      alert('Login failed');
+    try {
+      const params = new URLSearchParams();
+      params.append('username', username);
+      params.append('password', password);
+      const res = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        toaster.success('Successfully logged in');
+        onAuthSuccess(data.access_token);
+      } else {
+        const err = await res.json().catch(() => null);
+        toaster.error(err?.detail || 'Login failed. Please check your credentials.');
+      }
+    } catch (e) {
+      console.error(e);
+      toaster.error('An unexpected error occurred during login.');
     }
   };
 
@@ -33,13 +42,15 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: (token: string) =
         body: JSON.stringify({ username, email, password })
       });
       if (res.ok) {
+        toaster.success('Account created successfully!');
         handleLogin(e);
       } else {
-        const err = await res.json();
-        alert(err.detail || 'Sign up failed');
+        const err = await res.json().catch(() => null);
+        toaster.error(err?.detail || 'Sign up failed. Please try again.');
       }
     } catch (e) {
       console.error(e);
+      toaster.error('An unexpected error occurred during sign up.');
     }
   };
 

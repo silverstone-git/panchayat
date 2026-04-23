@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import { Avatar } from '../common/Avatar';
 import { Comments } from '../comments/Comments';
+import { toaster } from '../../utils/toaster';
 
 interface IdeaCardProps {
   item: any;
@@ -74,7 +75,7 @@ export function IdeaCard({ item, userVotes, vote, expandedIdea, setExpandedIdea,
                     }).catch(console.error);
                 } else {
                     navigator.clipboard.writeText(`${window.location.origin}/idea/${item.id}`);
-                    alert('Link copied to clipboard!');
+                    toaster.success('Link copied to clipboard!');
                 }
             }}
           >
