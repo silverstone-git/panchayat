@@ -1,5 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 import { Avatar } from '../common/Avatar';
 import { Comments } from '../comments/Comments';
 
@@ -19,12 +22,12 @@ export function IdeaCard({ item, userVotes, vote, expandedIdea, setExpandedIdea,
     <div className="bg-surface-container-lowest rounded-2xl p-0 flex flex-row group hover:shadow-xl transition-all duration-300 border border-surface-container overflow-hidden cursor-pointer" onClick={() => navigate(`/idea/${item.id}`)}>
       {/* Vote Sidebar */}
       <div className="bg-surface-container-low w-14 flex flex-col items-center py-4 border-r border-surface-container" onClick={(e) => e.stopPropagation()}>
-        <button className="p-1 hover:text-secondary-color transition-colors" onClick={() => vote(item.id, 1)}>
-          <span className="material-symbols-outlined text-xl" style={{ color: userVotes[item.id] === 1 ? 'var(--secondary-color)' : '' }}>expand_less</span>
+        <button className={`p-1 transition-colors ${userVotes[item.id] === 1 ? 'text-orange-600 dark:text-orange-400' : 'text-outline hover:text-orange-600 dark:hover:text-orange-400'}`} onClick={() => vote(item.id, 1)}>
+          <span className="material-symbols-outlined text-xl">expand_less</span>
         </button>
-        <span className="font-headline font-black text-primary my-1" style={{ color: userVotes[item.id] === 1 ? 'var(--secondary-color)' : userVotes[item.id] === -1 ? '#7193ff' : '' }}>{item.vote_count}</span>
-        <button className="p-1 hover:text-blue-500 transition-colors" onClick={() => vote(item.id, -1)}>
-          <span className="material-symbols-outlined text-xl" style={{ color: userVotes[item.id] === -1 ? '#7193ff' : '' }}>expand_more</span>
+        <span className={`font-headline font-black my-1 ${userVotes[item.id] === 1 ? 'text-orange-600 dark:text-orange-400' : userVotes[item.id] === -1 ? 'text-blue-600 dark:text-blue-400' : 'text-primary'}`}>{item.vote_count}</span>
+        <button className={`p-1 transition-colors ${userVotes[item.id] === -1 ? 'text-blue-600 dark:text-blue-400' : 'text-outline hover:text-blue-600 dark:hover:text-blue-400'}`} onClick={() => vote(item.id, -1)}>
+          <span className="material-symbols-outlined text-xl">expand_more</span>
         </button>
       </div>
       
@@ -36,6 +39,8 @@ export function IdeaCard({ item, userVotes, vote, expandedIdea, setExpandedIdea,
             <span className="text-[10px] font-bold uppercase tracking-widest text-secondary font-label">p/{item.category}</span>
             <span className="text-slate-300">•</span>
             <span className="text-xs text-on-surface-variant">Posted by u/{item.author_name || item.author_id}</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-xs text-on-surface-variant">{item.created_at ? new Date(item.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Recently'}</span>
           </div>
           
           {/* Stubbed Expert Review Tag */}
@@ -45,7 +50,11 @@ export function IdeaCard({ item, userVotes, vote, expandedIdea, setExpandedIdea,
         </div>
         
         <h4 className="text-xl font-bold font-headline text-on-surface group-hover:text-primary transition-colors mb-2 leading-snug">{item.title}</h4>
-        <p className="text-on-surface-variant font-body text-sm leading-relaxed mb-4 line-clamp-3">{item.description}</p>
+        <div className="text-on-surface-variant font-body text-sm leading-relaxed mb-4 line-clamp-3 overflow-hidden prose prose-sm dark:prose-invert max-w-none">
+          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+            {item.description}
+          </ReactMarkdown>
+        </div>
         
         <div className="flex items-center gap-6 mt-auto">
           <div className="flex items-center gap-1.5 text-xs font-bold text-primary/60 group-hover:text-primary transition-colors">

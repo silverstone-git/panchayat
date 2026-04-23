@@ -153,6 +153,44 @@ class CommentService:
         await db.commit()
 
 
+    async def delete_comment(self, db: AsyncSession, comment_id: UUID, current_user_id: str):
+        from sqlalchemy import update
+        import httpx
+
+        # Fetch the comment
+        stmt = select(Comment).where(Comment.id == comment_id)
+        result = await db.execute(stmt)
+        comment = result.scalar_one_or_none()
+
+        if not comment:
+            raise HTTPException(status_code=404, detail="Comment not found")
+
+        if comment.author_id != current_user_id:
+            raise HTTPException(status_code=403, detail="Not authorized to delete this comment")
+
+        # We do a soft delete to preserve the conversation tree
+        update_stmt = (
+            update(Comment)
+            .where(Comment.id == comment_id)
+            .values(
+                content="[This comment has been deleted by the user]",
+                author_id="[deleted]",
+                author_name="[deleted]"
+            )
+        )
+        await db.execute(update_stmt)
+        await db.commit()
+
+        # Tell voting service to delete votes for this comment
+        try:
+            async with httpx.AsyncClient() as client:
+                await client.delete(f"{settings.VOTING_SERVICE_URL}/api/v1/votes/target/comment/{comment_id}")
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Error notifying voting service of comment deletion: {e}")
+
+        return {"status": "deleted"}
+
     async def hide_comment(self, db: AsyncSession, comment_id: UUID):
         from sqlalchemy import update
         stmt = (

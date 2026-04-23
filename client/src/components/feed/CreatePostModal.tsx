@@ -26,6 +26,9 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [showImageDropdown, setShowImageDropdown] = useState(false);
+  const [dropdownQuery, setDropdownQuery] = useState("");
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [triggerPosition, setTriggerPosition] = useState<number | null>(null);
   const descRef = useRef<HTMLTextAreaElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,18 +56,70 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
   };
   
   const handleDescChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNewDesc(e.target.value);
-    setShowImageDropdown(e.target.value.endsWith('!'));
+    const value = e.target.value;
+    const cursor = e.target.selectionStart;
+    setNewDesc(value);
+
+    const textBeforeCursor = value.substring(0, cursor);
+    const lastExclamation = textBeforeCursor.lastIndexOf('!');
+
+    if (lastExclamation !== -1) {
+        const query = textBeforeCursor.substring(lastExclamation + 1);
+        if (!/\\s/.test(query)) {
+            setShowImageDropdown(true);
+            setDropdownQuery(query);
+            setTriggerPosition(lastExclamation);
+            setFocusedIndex(0);
+            return;
+        }
+    }
+    
+    setShowImageDropdown(false);
+    setDropdownQuery("");
+    setTriggerPosition(null);
   };
 
   const insertImageMarkdown = (image: UploadedImage) => {
-    if (descRef.current) {
+    if (descRef.current && triggerPosition !== null) {
         const { selectionStart, value } = descRef.current;
-        const markdown = `![${image.caption || image.file.name}](${image.id} "${image.caption || ''}")`;
-        const newValue = value.slice(0, selectionStart - 1) + markdown + value.slice(selectionStart);
+        const markdown = `![${image.caption || image.file.name}](${image.id} "${image.caption || ''}") `;
+        const newValue = value.slice(0, triggerPosition) + markdown + value.slice(selectionStart);
         setNewDesc(newValue);
         setShowImageDropdown(false);
-        descRef.current.focus();
+        setDropdownQuery("");
+        setTriggerPosition(null);
+        setFocusedIndex(0);
+        
+        setTimeout(() => {
+            if (descRef.current) {
+                descRef.current.focus();
+                descRef.current.selectionStart = triggerPosition + markdown.length;
+                descRef.current.selectionEnd = triggerPosition + markdown.length;
+            }
+        }, 0);
+    }
+  };
+
+  const filteredImages = uploadedImages.filter(img => 
+    img.file.name.toLowerCase().includes(dropdownQuery.toLowerCase()) || 
+    (img.caption && img.caption.toLowerCase().includes(dropdownQuery.toLowerCase()))
+  );
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showImageDropdown && filteredImages.length > 0) {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setFocusedIndex(prev => (prev + 1) % filteredImages.length);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setFocusedIndex(prev => (prev - 1 + filteredImages.length) % filteredImages.length);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            insertImageMarkdown(filteredImages[focusedIndex]);
+        } else if (e.key === 'Escape') {
+            setShowImageDropdown(false);
+            setTriggerPosition(null);
+        }
     }
   };
 
@@ -75,6 +130,7 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
 
     try {
       const uploadedData = [];
+      const imageMap = new Map<string, string>();
       for (const img of uploadedImages) {
         // Request public upload URL for idea images
         const urlRes = await fetch('/api/v1/threads/images/upload-request', {
@@ -94,10 +150,11 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
         
         await fetch(upload_url, { method: 'PUT', headers: { 'Content-Type': img.file.type }, body: img.file });
         uploadedData.push({ url: public_url, caption: img.caption });
+        imageMap.set(img.id, public_url);
       }
 
       const finalDesc = uploadedImages.reduce((acc, img) => 
-        acc.replace(new RegExp(img.id, 'g'), img.url || ''), newDesc);
+        acc.replace(new RegExp(img.id, 'g'), imageMap.get(img.id) || ''), newDesc);
 
       const newIdeaData = {
         id: `optimistic-${Date.now()}`,
@@ -156,13 +213,19 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
               placeholder="Detail your proposal. Use markdown for formatting. Type '!' to insert an uploaded image." 
               value={newDesc} 
               onChange={handleDescChange} 
+              onKeyDown={handleKeyDown}
               required 
             />
-            {showImageDropdown && uploadedImages.length > 0 && (
+            {showImageDropdown && filteredImages.length > 0 && (
                 <div className="absolute z-10 bg-surface-container-high rounded-lg shadow-xl border border-outline-variant mt-1 w-64 max-h-40 overflow-y-auto">
-                    {uploadedImages.map(img => (
-                        <div key={img.id} onClick={() => insertImageMarkdown(img)} className="p-2 hover:bg-surface-container-highest cursor-pointer text-sm font-bold text-primary border-b border-surface-container">
-                            {img.file.name}
+                    {filteredImages.map((img, idx) => (
+                        <div 
+                           key={img.id} 
+                           onClick={() => insertImageMarkdown(img)} 
+                           className={`p-2 cursor-pointer text-sm font-bold border-b border-surface-container transition-colors ${idx === focusedIndex ? 'bg-surface-container-highest text-primary' : 'text-on-surface hover:bg-surface-container-highest'}`}
+                        >
+                            <span className="truncate block">{img.file.name}</span>
+                            {img.caption && <span className="text-xs text-outline font-normal truncate block">{img.caption}</span>}
                         </div>
                     ))}
                 </div>

@@ -31,6 +31,14 @@ async def get_idea(id: UUID, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Idea not found")
     return idea
 
+@router.delete("/{id}")
+async def delete_idea(
+    id: UUID,
+    x_user_id: str = Header(..., alias="X-User-Id"),
+    db: AsyncSession = Depends(get_db)
+):
+    return await idea_service.delete_idea(db, str(id), x_user_id)
+
 @router.get("/trending/hero", response_model=IdeaResponse)
 async def get_trending_hero(db: AsyncSession = Depends(get_db)):
     # Simple trending logic: highest vote count from the last 7 days

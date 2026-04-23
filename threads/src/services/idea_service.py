@@ -193,6 +193,75 @@ class IdeaService:
                 )
 
 
+    async def delete_idea(self, db: AsyncSession, idea_id: str, current_user_id: str):
+        from src.db.models import Comment
+        import boto3
+        import httpx
+        from botocore.config import Config
+        import asyncio
+        from sqlalchemy import delete
+        import logging
+        
+        logger = logging.getLogger(__name__)
+
+        # Fetch idea
+        stmt = select(Idea).where(Idea.id == idea_id)
+        result = await db.execute(stmt)
+        idea = result.scalar_one_or_none()
+
+        if not idea:
+            raise HTTPException(status_code=404, detail="Idea not found")
+            
+        if idea.author_id != current_user_id:
+            raise HTTPException(status_code=403, detail="Not authorized to delete this idea")
+
+        # 1. Fetch related ImageRecords
+        img_stmt = select(ImageRecord).where(ImageRecord.idea_id == idea_id)
+        img_res = await db.execute(img_stmt)
+        images = img_res.scalars().all()
+
+        # 2. Delete from R2 (in a background thread to not block event loop)
+        if images and settings.R2_ACCOUNT_ID:
+            def delete_from_r2(keys):
+                try:
+                    s3 = boto3.client(
+                        's3',
+                        endpoint_url=f"https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+                        aws_access_key_id=settings.R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC,
+                        aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC,
+                        config=Config(signature_version='s3v4'),
+                        region_name='auto'
+                    )
+                    objects = [{'Key': key} for key in keys]
+                    s3.delete_objects(Bucket=settings.R2_BUCKET_NAME_PUBLIC, Delete={'Objects': objects})
+                except Exception as e:
+                    logger.error(f"Error deleting from R2: {e}")
+
+            loop = asyncio.get_running_loop()
+            keys_to_delete = [img.file_key for img in images]
+            await loop.run_in_executor(None, delete_from_r2, keys_to_delete)
+
+        # 3. Delete from DB (cascade should ideally handle it, but we can do it manually just in case)
+        await db.execute(delete(ImageRecord).where(ImageRecord.idea_id == idea_id))
+        await db.execute(delete(Comment).where(Comment.idea_id == idea_id))
+        await db.execute(delete(Idea).where(Idea.id == idea_id))
+        await db.commit()
+
+        # 4. Remove from Elasticsearch
+        await search_service.delete_idea(idea_id)
+
+        # 5. Clear Cache
+        await cache_service.clear_feed_cache()
+        
+        # 6. Tell voting service to delete votes
+        try:
+            async with httpx.AsyncClient() as client:
+                await client.delete(f"{settings.VOTING_SERVICE_URL}/api/v1/votes/target/idea/{idea_id}")
+        except Exception as e:
+            logger.error(f"Error notifying voting service of idea deletion: {e}")
+
+        return {"status": "deleted"}
+
     async def hide_idea(self, db: AsyncSession, idea_id: str):
         stmt = (
             update(Idea)

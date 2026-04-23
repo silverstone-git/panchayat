@@ -42,3 +42,11 @@ async def report_comment(
 ):
     await kafka_service.report_content(user_id=x_user_id, target_type="comment", target_id=str(comment_id), reason=report_in.reason)
     return {"message": "Report submitted successfully."}
+
+@router.delete("/comments/{comment_id}")
+async def delete_comment(
+    comment_id: UUID,
+    x_user_id: str = Header(..., alias="X-User-Id"),
+    db: AsyncSession = Depends(get_db)
+):
+    return await comment_service.delete_comment(db, comment_id, x_user_id)

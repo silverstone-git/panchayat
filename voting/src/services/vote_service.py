@@ -155,4 +155,24 @@ class VoteService:
             results[tid] = int(val) if val is not None else 0
         return results
 
+    async def delete_target_votes(self, target_type: str, target_id: str):
+        total_key = f"total_votes:{target_type}:{target_id}"
+        up_key = f"up_votes:{target_type}:{target_id}"
+        down_key = f"down_votes:{target_type}:{target_id}"
+        user_key = f"user_votes:{target_type}:{target_id}"
+        
+        await self.redis.delete(total_key, up_key, down_key, user_key)
+
+        from src.db.session import async_session
+        from src.db.models import VoteRecord
+        from sqlalchemy import delete
+        
+        async with async_session() as db:
+            stmt = delete(VoteRecord).where(
+                VoteRecord.target_type == target_type,
+                VoteRecord.target_id == target_id
+            )
+            await db.execute(stmt)
+            await db.commit()
+
 vote_service = VoteService()

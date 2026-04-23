@@ -19,7 +19,21 @@ class KafkaService:
             bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
             value_serializer=lambda v: json.dumps(v).encode('utf-8')
         )
-        await self.producer.start()
+        
+        max_retries = 10
+        retry_delay = 5
+        for i in range(max_retries):
+            try:
+                await self.producer.start()
+                logger.info("Successfully connected to Kafka producer")
+                return
+            except Exception as e:
+                logger.error(f"Failed to connect to Kafka producer (attempt {i+1}/{max_retries}): {e}")
+                if i < max_retries - 1:
+                    await asyncio.sleep(retry_delay)
+                else:
+                    logger.error("Max retries reached for Kafka producer. Exiting.")
+                    raise e
 
     async def stop(self):
         if self.producer:

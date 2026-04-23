@@ -1,6 +1,12 @@
 services:
   gateway:
     image: panchayat-gateway:latest
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
     build:
       context: ./gateway
       dockerfile: Dockerfile
@@ -18,7 +24,24 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      threads:
+        condition: service_healthy
+      voting:
+        condition: service_healthy
+      moderation-service:
+        condition: service_healthy
+      expert-review-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+      gov-submit-service:
+        condition: service_healthy
+      crowdfund-service:
+        condition: service_healthy
     deploy:
       replicas: 1
       restart_policy:
@@ -31,6 +54,12 @@ services:
 
   threads:
     image: panchayat-threads:latest
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     build:
       context: ./threads
       dockerfile: Dockerfile
@@ -53,10 +82,14 @@ services:
       - R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC=${R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC}
       - R2_PUBLIC_DEVELOPMENT_URL_PANCHAYAT_PUBLIC=${R2_PUBLIC_DEVELOPMENT_URL_PANCHAYAT_PUBLIC}
     depends_on:
-      - kafka
-      - elasticsearch
+      kafka:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
     deploy:
       replicas: 3
+      restart_policy:
+        condition: on-failure
       update_config:
         parallelism: 1
         delay: 10s
@@ -65,6 +98,12 @@ services:
 
   voting:
     image: panchayat-voting:latest
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     build:
       context: ./voting
       dockerfile: Dockerfile
@@ -77,14 +116,23 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     deploy:
       replicas: 3
+      restart_policy:
+        condition: on-failure
     networks:
       - panchayat-network
 
   user-service:
     image: panchayat-user-service:latest
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     build:
       context: ./user-service
       dockerfile: Dockerfile
@@ -104,14 +152,23 @@ services:
       - R2_ACCESS_KEY_ID_PANCHAYAT_PRIVATE=${R2_ACCESS_KEY_ID_PANCHAYAT_PRIVATE}
       - R2_SECRET_ACCESS_KEY_PANCHAYAT_PRIVATE=${R2_SECRET_ACCESS_KEY_PANCHAYAT_PRIVATE}
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     deploy:
       replicas: 2
+      restart_policy:
+        condition: on-failure
     networks:
       - panchayat-network
 
   moderation-service:
     image: panchayat-moderation:latest
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     build:
       context: ./moderation-service
       dockerfile: Dockerfile
@@ -123,15 +180,25 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     depends_on:
-      - kafka
-      - postgres-db
+      kafka:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
     deploy:
       replicas: 2
+      restart_policy:
+        condition: on-failure
     networks:
       - panchayat-network
 
   expert-review-service:
     image: panchayat-expert-review:latest
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8000/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     build:
       context: ./expert-review-service
       dockerfile: Dockerfile
@@ -143,15 +210,25 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
-      - kafka
-      - postgres-db
+      kafka:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
     deploy:
       replicas: 2
+      restart_policy:
+        condition: on-failure
     networks:
       - panchayat-network
 
   notification-service:
     image: panchayat-notification:latest
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8000/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     build:
       context: ./notification-service
       dockerfile: Dockerfile
@@ -163,15 +240,25 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
-      - kafka
-      - postgres-db
+      kafka:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
     networks:
       - panchayat-network
 
   gov-submit-service:
     image: panchayat-gov-submit:latest
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8000/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     build:
       context: ./gov-submit-service
       dockerfile: Dockerfile
@@ -183,15 +270,25 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
-      - kafka
-      - postgres-db
+      kafka:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
     networks:
       - panchayat-network
 
   crowdfund-service:
     image: panchayat-crowdfund:latest
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8000/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     build:
       context: ./crowdfund-service
       dockerfile: Dockerfile
@@ -203,10 +300,14 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
-      - kafka
-      - postgres-db
+      kafka:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
     networks:
       - panchayat-network
 
@@ -222,9 +323,12 @@ services:
     ports:
       - "5173:80"
     depends_on:
-      - gateway
+      gateway:
+        condition: service_healthy
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
     networks:
       - panchayat-network
 
@@ -240,6 +344,11 @@ services:
 
   postgres-db:
     image: postgres:15
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d panchayat_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -260,6 +369,12 @@ services:
 
   elasticsearch:
     image: elasticsearch:8.11.3
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     environment:
       - discovery.type=single-node
       - cluster.routing.allocation.disk.threshold_enabled=false
@@ -274,6 +389,11 @@ services:
 
   kafka:
     image: apache/kafka:4.1.2
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 29092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     environment:
       KAFKA_NODE_ID: 1
       CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"

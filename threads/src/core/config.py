@@ -46,6 +46,7 @@ class Settings(BaseSettings):
 
     # Moderation Service
     MODERATION_SERVICE_URL: str = "http://localhost:8005"
+    VOTING_SERVICE_URL: str = "http://voting:8000"
     OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://jaeger:4317"
     JAEGER_AGENT_PORT: int = 6831
 

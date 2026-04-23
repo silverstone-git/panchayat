@@ -1,65 +1,85 @@
-
 services:
   gateway:
     build:
       context: ./gateway
       dockerfile: Dockerfile-debug
     volumes:
-      - ./gateway:/app
-      - /app/target
-      - ~/.m2:/root/.m2
+    - ./gateway:/app
+    - /app/target
+    - ~/.m2:/root/.m2
     ports:
-      - "8080:8080"
+    - 8080:8080
     environment:
-      - USER_SERVICE_URI=http://user-service:8000
-      - THREADS_SERVICE_URI=http://threads:8000
-      - VOTING_SERVICE_URI=http://voting:8000
-      - CROWDFUND_SERVICE_URI=http://crowdfund-service:8000
-      - MODERATION_SERVICE_URI=http://moderation-service:8000
-      - EXPERT_REVIEW_SERVICE_URI=http://expert-review-service:8000
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+    - USER_SERVICE_URI=http://user-service:8000
+    - THREADS_SERVICE_URI=http://threads:8000
+    - VOTING_SERVICE_URI=http://voting:8000
+    - CROWDFUND_SERVICE_URI=http://crowdfund-service:8000
+    - MODERATION_SERVICE_URI=http://moderation-service:8000
+    - EXPERT_REVIEW_SERVICE_URI=http://expert-review-service:8000
+    - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       kafka:
         condition: service_healthy
+      user-service:
+        condition: service_healthy
+      threads:
+        condition: service_healthy
+      voting:
+        condition: service_healthy
+      moderation-service:
+        condition: service_healthy
+      expert-review-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+      gov-submit-service:
+        condition: service_healthy
+      crowdfund-service:
+        condition: service_healthy
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
     networks:
-      - demovox-network
+    - demovox-network
     healthcheck:
-      test: ["CMD-SHELL", "nc -z 127.0.0.1 8080 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
+      test:
+      - CMD-SHELL
+      - wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health
+        || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
   threads:
     ports:
-      - "8011-8012:8000"
+    - 8011-8012:8000
     build:
       context: ./threads
       dockerfile: Dockerfile-debug
     volumes:
-      - ./threads:/app
-      - /app/.venv
+    - ./threads:/app
+    - /app/.venv
     environment:
-      - POSTGRES_HOST=postgres-db
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=threads_db
-      - REDIS_HOST=redis-cache
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
-      - ELASTIC_USER=elastic
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - MODERATION_SERVICE_URL=http://moderation-service:8000
-      - POPULAR_VOTE_THRESHOLD=1
-      - R2_ACCOUNT_ID=${R2_ACCOUNT_ID}
-      - R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC=${R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC}
-      - R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC=${R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC}
-      - R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC=${R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC}
-      - R2_PUBLIC_DEVELOPMENT_URL_PANCHAYAT_PUBLIC=${R2_PUBLIC_DEVELOPMENT_URL_PANCHAYAT_PUBLIC}
+    - POSTGRES_HOST=postgres-db
+    - POSTGRES_USER=${POSTGRES_USER}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    - POSTGRES_DB=threads_db
+    - REDIS_HOST=redis-cache
+    - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    - ELASTIC_USER=elastic
+    - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    - ELASTICSEARCH_URL=http://elasticsearch:9200
+    - MODERATION_SERVICE_URL=http://moderation-service:8000
+    - POPULAR_VOTE_THRESHOLD=1
+    - R2_ACCOUNT_ID=${R2_ACCOUNT_ID}
+    - R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC=${R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC}
+    - R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC=${R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC}
+    - R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC=${R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC}
+    - R2_PUBLIC_DEVELOPMENT_URL_PANCHAYAT_PUBLIC=${R2_PUBLIC_DEVELOPMENT_URL_PANCHAYAT_PUBLIC}
     depends_on:
       kafka:
         condition: service_healthy
@@ -67,78 +87,109 @@ services:
         condition: service_healthy
     deploy:
       replicas: 2
+      restart_policy:
+        condition: on-failure
     networks:
-      - demovox-network
-
+    - demovox-network
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+        || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
   voting:
     ports:
-      - "8021-8022:8000"
+    - 8021-8022:8000
     build:
       context: ./voting
       dockerfile: Dockerfile-debug
     volumes:
-      - ./voting:/app
-      - /app/.venv
+    - ./voting:/app
+    - /app/.venv
     environment:
-      - POSTGRES_HOST=postgres-db
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=voting_db
-      - REDIS_HOST=redis-cache
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    - POSTGRES_HOST=postgres-db
+    - POSTGRES_USER=${POSTGRES_USER}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    - POSTGRES_DB=voting_db
+    - REDIS_HOST=redis-cache
+    - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     depends_on:
       kafka:
         condition: service_healthy
     deploy:
       replicas: 2
+      restart_policy:
+        condition: on-failure
     networks:
-      - demovox-network
-
+    - demovox-network
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+        || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
   user-service:
     ports:
-      - "8001:8000"
+    - 8001:8000
     build:
       context: ./user-service
       dockerfile: Dockerfile-debug
     volumes:
-      - ./user-service:/app
-      - /app/.venv
+    - ./user-service:/app
+    - /app/.venv
     environment:
-      - POSTGRES_HOST=postgres-db
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=users_db
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
-      - R2_ACCOUNT_ID=${R2_ACCOUNT_ID}
-      - R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC=${R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC}
-      - R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC=${R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC}
-      - R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC=${R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC}
-      - R2_S3_API_BASE_URL_PANCHAYAT=${R2_S3_API_BASE_URL_PANCHAYAT}
-      - R2_ACCESS_KEY_ID_PANCHAYAT_PRIVATE=${R2_ACCESS_KEY_ID_PANCHAYAT_PRIVATE}
-      - R2_SECRET_ACCESS_KEY_PANCHAYAT_PRIVATE=${R2_SECRET_ACCESS_KEY_PANCHAYAT_PRIVATE}
+    - POSTGRES_HOST=postgres-db
+    - POSTGRES_USER=${POSTGRES_USER}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    - POSTGRES_DB=users_db
+    - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    - R2_ACCOUNT_ID=${R2_ACCOUNT_ID}
+    - R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC=${R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC}
+    - R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC=${R2_ACCESS_KEY_ID_PANCHAYAT_PUBLIC}
+    - R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC=${R2_SECRET_ACCESS_KEY_PANCHAYAT_PUBLIC}
+    - R2_S3_API_BASE_URL_PANCHAYAT=${R2_S3_API_BASE_URL_PANCHAYAT}
+    - R2_ACCESS_KEY_ID_PANCHAYAT_PRIVATE=${R2_ACCESS_KEY_ID_PANCHAYAT_PRIVATE}
+    - R2_SECRET_ACCESS_KEY_PANCHAYAT_PRIVATE=${R2_SECRET_ACCESS_KEY_PANCHAYAT_PRIVATE}
     depends_on:
       kafka:
         condition: service_healthy
     networks:
-      - demovox-network
-
+    - demovox-network
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+        || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      restart_policy:
+        condition: on-failure
   moderation-service:
     build:
       context: ./moderation-service
       dockerfile: Dockerfile-debug
     volumes:
-      - ./moderation-service:/app
-      - /app/.venv
+    - ./moderation-service:/app
+    - /app/.venv
     environment:
-      - POSTGRES_HOST=postgres-db
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=moderation_db
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    - POSTGRES_HOST=postgres-db
+    - POSTGRES_USER=${POSTGRES_USER}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    - POSTGRES_DB=moderation_db
+    - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     depends_on:
       kafka:
         condition: service_healthy
@@ -146,24 +197,34 @@ services:
         condition: service_healthy
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
     networks:
-      - demovox-network
-
+    - demovox-network
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+        || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
   expert-review-service:
     build:
       context: ./expert-review-service
       dockerfile: Dockerfile-debug
     volumes:
-      - ./expert-review-service:/app
-      - /app/target
-      - ~/.m2:/root/.m2
+    - ./expert-review-service:/app
+    - /app/target
+    - ~/.m2:/root/.m2
     environment:
-      - POSTGRES_HOST=postgres-db
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=expert_review_db
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+    - POSTGRES_HOST=postgres-db
+    - POSTGRES_USER=${POSTGRES_USER}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    - POSTGRES_DB=expert_review_db
+    - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       kafka:
         condition: service_healthy
@@ -171,24 +232,34 @@ services:
         condition: service_healthy
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
     networks:
-      - demovox-network
-
+    - demovox-network
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget --no-verbose --tries=1 --spider http://localhost:8000/actuator/health
+        || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
   notification-service:
     build:
       context: ./notification-service
       dockerfile: Dockerfile-debug
     volumes:
-      - ./notification-service:/app
-      - /app/target
-      - ~/.m2:/root/.m2
+    - ./notification-service:/app
+    - /app/target
+    - ~/.m2:/root/.m2
     environment:
-      - POSTGRES_HOST=postgres-db
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=notification_db
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+    - POSTGRES_HOST=postgres-db
+    - POSTGRES_USER=${POSTGRES_USER}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    - POSTGRES_DB=notification_db
+    - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       kafka:
         condition: service_healthy
@@ -196,24 +267,34 @@ services:
         condition: service_healthy
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
     networks:
-      - demovox-network
-
+    - demovox-network
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget --no-verbose --tries=1 --spider http://localhost:8000/actuator/health
+        || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
   gov-submit-service:
     build:
       context: ./gov-submit-service
       dockerfile: Dockerfile-debug
     volumes:
-      - ./gov-submit-service:/app
-      - /app/target
-      - ~/.m2:/root/.m2
+    - ./gov-submit-service:/app
+    - /app/target
+    - ~/.m2:/root/.m2
     environment:
-      - POSTGRES_HOST=postgres-db
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=gov_submit_db
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+    - POSTGRES_HOST=postgres-db
+    - POSTGRES_USER=${POSTGRES_USER}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    - POSTGRES_DB=gov_submit_db
+    - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       kafka:
         condition: service_healthy
@@ -221,24 +302,34 @@ services:
         condition: service_healthy
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
     networks:
-      - demovox-network
-
+    - demovox-network
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget --no-verbose --tries=1 --spider http://localhost:8000/actuator/health
+        || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
   crowdfund-service:
     build:
       context: ./crowdfund-service
       dockerfile: Dockerfile-debug
     volumes:
-      - ./crowdfund-service:/app
-      - /app/target
-      - ~/.m2:/root/.m2
+    - ./crowdfund-service:/app
+    - /app/target
+    - ~/.m2:/root/.m2
     environment:
-      - POSTGRES_HOST=postgres-db
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=crowdfund_db
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+    - POSTGRES_HOST=postgres-db
+    - POSTGRES_USER=${POSTGRES_USER}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    - POSTGRES_DB=crowdfund_db
+    - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       kafka:
         condition: service_healthy
@@ -246,134 +337,140 @@ services:
         condition: service_healthy
     deploy:
       replicas: 1
+      restart_policy:
+        condition: on-failure
     networks:
-      - demovox-network
-
-
+    - demovox-network
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget --no-verbose --tries=1 --spider http://localhost:8000/actuator/health
+        || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
   jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
-      - "16686:16686"
-      - "14250:14250"
-      - "4317:4317"
-      - "4318:4318"
+    - 16686:16686
+    - 14250:14250
+    - 4317:4317
+    - 4318:4318
     networks:
-      - demovox-network
-
+    - demovox-network
   client:
     build:
       context: ./client
       dockerfile: Dockerfile-debug
     volumes:
-      - ./client:/app
-      - /app/node_modules
+    - ./client:/app
+    - /app/node_modules
     environment:
-      - GATEWAY_URL=http://gateway:8080
-      - THREADS_URL=http://threads:8000
-      - VOTING_URL=http://voting:8000
+    - GATEWAY_URL=http://gateway:8080
+    - THREADS_URL=http://threads:8000
+    - VOTING_URL=http://voting:8000
     ports:
-      - "5173:5173"
+    - 5173:5173
     depends_on:
-      - gateway
+      gateway:
+        condition: service_healthy
     networks:
-      - demovox-network
-
-  # Monitoring (Accessible on localhost:3000 and localhost:9090)
+    - demovox-network
+    deploy:
+      restart_policy:
+        condition: on-failure
   prometheus:
     image: prom/prometheus:latest
     volumes:
-      - ./monitoring/prometheus/prometheus-dev.yml:/etc/prometheus/prometheus.yml
+    - ./monitoring/prometheus/prometheus-dev.yml:/etc/prometheus/prometheus.yml
     ports:
-      - "9090:9090"
+    - 9090:9090
     networks:
-      - demovox-network
-
+    - demovox-network
   redis-exporter:
     image: oliver006/redis_exporter
     ports:
-      - "9121:9121"
+    - 9121:9121
     networks:
-      - demovox-network
+    - demovox-network
     environment:
-      - REDIS_ADDR=redis-cache:6379
-
+    - REDIS_ADDR=redis-cache:6379
   postgres-exporter:
     image: quay.io/prometheuscommunity/postgres-exporter
     ports:
-      - "9187:9187"
+    - 9187:9187
     environment:
-      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/threads_db?sslmode=disable
+    - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/threads_db?sslmode=disable
     networks:
-      - demovox-network
-
+    - demovox-network
   kafka-exporter:
     image: danielqsj/kafka-exporter
     ports:
-      - "9308:9308"
-    command: ["--kafka.server=kafka:29092"]
+    - 9308:9308
+    command:
+    - --kafka.server=kafka:29092
     networks:
-      - demovox-network
-
+    - demovox-network
   grafana:
     image: grafana/grafana:latest
     volumes:
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
     ports:
-      - "3000:3000"
+    - 3000:3000
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+    - GF_SECURITY_ADMIN_PASSWORD=admin
     networks:
-      - demovox-network
-
-  # Infrastructure (Keep these singletons for dev)
+    - demovox-network
   postgres-db:
     image: postgres:15
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=panchayat_db
+    - POSTGRES_USER=${POSTGRES_USER}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    - POSTGRES_DB=panchayat_db
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./postgres-init/init.sql:/docker-entrypoint-initdb.d/init.sql
+    - postgres_data:/var/lib/postgresql/data
+    - ./postgres-init/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - demovox-network
+    - demovox-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d gateway_db"]
+      test:
+      - CMD-SHELL
+      - pg_isready -U ${POSTGRES_USER} -d panchayat_db
       interval: 10s
       timeout: 5s
       retries: 5
-
   redis-cache:
     image: redis:alpine
     networks:
-      - demovox-network
-
+    - demovox-network
   elasticsearch:
     image: elasticsearch:8.11.3
     ports:
-      - "9200:9200"
-      - "9300:9300"
+    - 9200:9200
+    - 9300:9300
     environment:
-      - discovery.type=single-node
-      - cluster.routing.allocation.disk.threshold_enabled=false
-      - xpack.security.enabled=true
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    - discovery.type=single-node
+    - cluster.routing.allocation.disk.threshold_enabled=false
+    - xpack.security.enabled=true
+    - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    - ES_JAVA_OPTS=-Xms512m -Xmx512m
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200 || exit 1"]
+      test:
+      - CMD-SHELL
+      - curl -s http://localhost:9200 > /dev/null || exit 1
       interval: 10s
       timeout: 5s
-      retries: 15
+      retries: 5
       start_period: 30s
     networks:
-      - demovox-network
-
+    - demovox-network
   kafka:
     image: apache/kafka:4.1.2
     environment:
       KAFKA_NODE_ID: 1
-      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,EXTERNAL://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092
@@ -382,20 +479,20 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CREATE_TOPICS: "ideas-events:1:1,votes-events:1:1,xp-events:1:1,content.hidden:1:1,moderation.reports:1:1,dead-letter-queue:1:1,expert-events:1:1"
+      KAFKA_CREATE_TOPICS: ideas-events:1:1,votes-events:1:1,xp-events:1:1,content.hidden:1:1,moderation.reports:1:1,dead-letter-queue:1:1,expert-events:1:1
     ports:
-      - "9092:9092"
+    - 9092:9092
     healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
-      interval: 15s
-      timeout: 30s
-      retries: 10
+      test:
+      - CMD-SHELL
+      - nc -z localhost 29092 || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - demovox-network
-
+    - demovox-network
 networks:
   demovox-network:
     driver: bridge
-
 volumes:
-  postgres_data:
+  postgres_data: null

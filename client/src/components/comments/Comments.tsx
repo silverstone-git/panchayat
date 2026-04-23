@@ -77,7 +77,7 @@ export function Comments({ ideaId, token }: { ideaId: string; token: string }) {
     setUserCommentVotes(prev => ({ ...prev, [id]: newDir }));
     
     try {
-      await fetch(`/api/v1/votes/idea/${id}`, {
+      await fetch(`/api/v1/votes/comment/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ direction: newDir })

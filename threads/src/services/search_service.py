@@ -47,6 +47,16 @@ class SearchService:
             refresh=True
         )
 
+    async def delete_idea(self, idea_id: str):
+        try:
+            await self.client.delete(
+                index=settings.ELASTICSEARCH_INDEX,
+                id=idea_id,
+                refresh=True
+            )
+        except Exception:
+            pass # Ignore if not found
+
     async def search_ideas(self, query_text: str = None, category: str = None, author_id: str = None, status: str = None, sort: str = "new", page: int = 1, size: int = 10):
         query = {"bool": {"must": [], "filter": []}}
         

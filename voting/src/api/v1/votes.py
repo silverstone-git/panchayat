@@ -39,3 +39,14 @@ async def get_my_votes(
         return {}
 
     return await vote_service.get_user_votes(target_type, ids_list, x_user_id)
+
+@router.delete("/target/{target_type}/{target_id}")
+async def delete_votes(
+    target_type: str,
+    target_id: str
+):
+    if target_type not in ["idea", "comment"]:
+        raise HTTPException(status_code=400, detail="Invalid target type")
+
+    await vote_service.delete_target_votes(target_type, target_id)
+    return {"status": "success"}
