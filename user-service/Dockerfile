@@ -6,20 +6,22 @@ WORKDIR /app
 COPY pyproject.toml uv.lock* ./
 RUN uv sync --frozen --no-install-project --no-dev || uv sync --no-install-project --no-dev
 
-# Install the project itself
-ADD . /app
+# Copy only the source code and install project
+COPY src ./src
 RUN uv sync --frozen --no-dev || uv sync --no-dev
 
 FROM python:3.12-slim-bookworm
 WORKDIR /app
 
-# Install uv in the final stage too so we can use `uv run`
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uv/bin/uv
-ENV PATH="/uv/bin:${PATH}"
+# Install uv for runtime (optional but good for consistency)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+ENV PATH="/bin:${PATH}"
 
-# Copy the environment and project from the builder
-COPY --from=builder /app /app
+# Copy the environment and the application source
+COPY --from=builder /app/.venv ./.venv
+COPY --from=builder /app/src ./src
+ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app"
 
 EXPOSE 8000
-CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
