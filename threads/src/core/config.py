@@ -59,6 +59,9 @@ class Settings(BaseSettings):
     R2_S3_API_BASE_URL_PANCHAYAT_PUBLIC: str = ""
     R2_PUBLIC_DEVELOPMENT_URL_PANCHAYAT_PUBLIC: str = ""
 
+    # Unsplash API
+    UNSPLASH_APP_ACCESS_KEY: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
