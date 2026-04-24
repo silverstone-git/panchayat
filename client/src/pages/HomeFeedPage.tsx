@@ -27,6 +27,18 @@ export function HomeFeedPage({ token, profile, updateAvatar, searchQuery }: any)
 
   const displayHero = !activeCategory && !searchQuery && !loadingTrending && trendingIdea;
 
+  const getCategoryPlaceholder = (category: string) => {
+    const keywords: Record<string, string> = {
+      'environment': 'nature,forest',
+      'governance': 'government,parliament',
+      'infrastructure': 'bridge,architecture',
+      'policy': 'document,legal',
+      'general': 'community,meeting'
+    };
+    const kw = keywords[category] || 'city';
+    return `https://source.unsplash.com/featured/800x600?${kw}`;
+  };
+
   const handleOptimisticPost = (newIdea: any) => {
     setFeed(prev => [newIdea, ...prev]);
   };
@@ -66,7 +78,7 @@ export function HomeFeedPage({ token, profile, updateAvatar, searchQuery }: any)
                 src={
                   (trendingIdea.images && trendingIdea.images.length > 0) 
                     ? trendingIdea.images[0].url 
-                    : `https://source.unsplash.com/random/800x600/?${trendingIdea.category || 'city'}`
+                    : getCategoryPlaceholder(trendingIdea.category)
                 } 
               />
             </div>

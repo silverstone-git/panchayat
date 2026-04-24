@@ -1,5 +1,6 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import { CommentNode } from './CommentNode';
+import { toaster } from '../../utils/toaster';
 
 export function Comments({ ideaId, token }: { ideaId: string; token: string }) {
   const [comments, setComments] = useState<any[]>([]);
@@ -55,12 +56,29 @@ export function Comments({ ideaId, token }: { ideaId: string; token: string }) {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ content, parent_id: parentId })
       });
-      if (res.ok && !parentId) {
-        setNewComment('');
-        setPage(1);
-        fetchComments(1, true);
+      
+      if (res.ok) {
+        if (!parentId) {
+          setNewComment('');
+          setPage(1);
+          fetchComments(1, true);
+        }
+        toaster.success("Comment posted successfully!");
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        const detail = errorData.detail;
+        
+        if (detail === 'Your comment has been restricted') {
+          toaster.error("Your comment has been restricted");
+        } else {
+          const message = typeof detail === 'string' ? detail : (detail?.message || "Failed to post comment.");
+          toaster.error(message);
+        }
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error("Post comment error:", err);
+      toaster.error("Failed to post comment. Please try again.");
+    }
   };
 
   const handlePostTopLevel = (e: FormEvent) => {

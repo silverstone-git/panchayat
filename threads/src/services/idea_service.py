@@ -15,7 +15,10 @@ class IdeaService:
         mod_result = await moderation_client.check_content([idea_in.title, idea_in.description])
         
         if mod_result.get("is_flagged"):
-            raise HTTPException(status_code=400, detail="Content contains prohibited material.")
+            raise HTTPException(
+                status_code=403, 
+                detail="Your proposal has been restricted"
+            )
 
         status = "APPROVED"
         if mod_result.get("error"):

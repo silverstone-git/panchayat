@@ -9,12 +9,28 @@ from src.services.moderation_client import moderation_client
 from src.core.config import settings
 from fastapi import HTTPException
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class CommentService:
     async def create_comment(self, db: AsyncSession, idea_id: UUID, comment_in: CommentCreate, author_id: str, author_name: str = None):
         # 0. Moderation check
+        if settings.DEBUG:
+            logger.info(f"Checking moderation for comment: {comment_in.content[:50]}...")
+        
         mod_result = await moderation_client.check_content(comment_in.content)
+        
+        if settings.DEBUG:
+            logger.info(f"Moderation result: {mod_result}")
+            
         if mod_result.get("is_flagged"):
-            raise HTTPException(status_code=400, detail="Comment contains prohibited material.")
+            if settings.DEBUG:
+                logger.warning(f"Comment flagged by moderation: {comment_in.content[:50]}...")
+            raise HTTPException(
+                status_code=403, 
+                detail="Your comment has been restricted"
+            )
 
         status = "APPROVED"
         if mod_result.get("error"):

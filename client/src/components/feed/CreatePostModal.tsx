@@ -179,10 +179,22 @@ export function CreatePostModal({ token, activeCategory, onClose, onSuccess }: C
         body: JSON.stringify({ title: newTitle, description: finalDesc, category: localCategory, images: uploadedData })
       });
       
-      if (!res.ok) throw new Error('Server error');
-      toaster.success("Idea posted successfully!");
+      if (res.ok) {
+        toaster.success("Idea posted successfully!");
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        const detail = errorData.detail;
+        
+        if (detail === 'Your proposal has been restricted') {
+          toaster.error("Your proposal has been restricted");
+        } else {
+          const message = typeof detail === 'string' ? detail : (detail?.message || "Failed to post idea.");
+          toaster.error(message);
+        }
+      }
 
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Post idea error:", err);
       toaster.error("Failed to post idea. Please try again.");
     } finally {
       setIsSubmitting(false);
