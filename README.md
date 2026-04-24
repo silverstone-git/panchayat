@@ -91,6 +91,7 @@ flowchart TD
     NotifSvc --- Grafana
 ```
 
+[![Demo Video Link](https://img.youtube.com/vi/dE985dpGOWs/0.jpg)](https://www.youtube.com/watch?v=dE985dpGOWs)
 
 ---
 
